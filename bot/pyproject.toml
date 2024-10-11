@@ -1,15 +1,15 @@
 [tool.poetry]
-name = "appName"
+name = "rzd-bot"
 version = "0.1.0"
-description = "appDescription"
+description = "RZD Q&A Bot"
 license = "Apache-2.0"
-authors = ["AI RnD Lab Developers"]
+authors = ["AI RnD Lab Authors"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "^3.11"
-uvicorn = "0.23.2"
-fastapi = "0.103.2"
+aiogram = "^3.13.1"
+pyyaml = "^6.0.2"
 
 [build-system]
 requires = ["poetry-core"]
