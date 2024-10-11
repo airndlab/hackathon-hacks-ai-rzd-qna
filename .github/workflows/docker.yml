@@ -19,7 +19,7 @@ env:
     bot=bot
     qna=qna
   IMAGE_MAP: |
-    bot=rzd-qna-bot
+    bot=rzd-bot
     qna=rzd-qna
 
 jobs:
