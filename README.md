@@ -4,4 +4,27 @@
 
 Состав проекта:
 
-- [bot](bot) - Telegram бот
+- [Telegram бот](bot)
+- [Конфигурация](config/README.md)
+
+## Разработка
+
+Установить:
+
+- python
+- poetry
+
+## Сборка
+
+> Настроена сборка через
+> [GitHub Actions](https://github.com/airndlab/hackathon-hacks-ai-rzd-qna/actions/workflows/docker.yml).
+
+Установить:
+
+- docker
+
+Перейти в нужный подпроект и запустить:
+
+```
+docker build -t <название вашего образа>:<тег вашего образа> .
+```
