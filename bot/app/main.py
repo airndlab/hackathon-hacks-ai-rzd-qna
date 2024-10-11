@@ -68,12 +68,13 @@ async def question_handler(message: Message) -> None:
     try:
         question = message.text
         answer_data = await get_answer(question, f'{message.chat.id}')
-        text = create_answer_text(answer_data, verbose)
+        text = create_answer_text(answer_data)
         markup = create_answer_markup(answer_data.id)
         await message.reply(text, reply_markup=markup)
     except Exception as exception:
         error_text = bot_messages['error']
         await message.reply(error_text)
+        logger.error(exception)
 
 
 # Создание кнопок для сообщения
@@ -87,17 +88,8 @@ def create_answer_markup(answer_id: str) -> InlineKeyboardMarkup:
 
 # Вспомогательные методы
 
-def create_answer_text(response: Answer, verbose: bool) -> str:
-    docs_text = get_docs_text(response.source)
-    other_text = response.get_other_inline() if verbose else ''
-    return bot_messages['answer'].format(
-        answer=response.answer,
-        class_1=response.class_1,
-        class_2=response.class_2,
-        assurance=assurance_text,
-        docs=docs_text,
-        other=other_text
-    )
+def create_answer_text(response: Answer) -> str:
+    return bot_messages['answer'].format(answer=response.answer)
 
 
 async def main() -> None:
