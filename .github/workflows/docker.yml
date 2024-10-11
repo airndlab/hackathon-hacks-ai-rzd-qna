@@ -3,23 +3,28 @@ name: Docker image
 on:
   workflow_dispatch:
     inputs:
-      tag:
-        description: 'Docker image tag'
+      project:
+        description: 'Project name'
         required: true
-        type: string
+        type: choice
+        options:
+          - bot
+          - qna
   release:
     types:
       - created
 
 env:
-  TAG: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}
+  PATH_MAP: |
+    bot=bot
+    qna=qna
+  IMAGE_MAP: |
+    bot=rzd-qna-bot
+    qna=rzd-qna
 
 jobs:
   build:
     runs-on: ubuntu-latest
-    env:
-      IMAGE: docker.io/${{ github.repository }}:$TAG
-      YCR_IMAGE: cr.yandex/${{ secrets.YC_CONTAINER_REGISTRY_ID }}/${{ github.repository }}:$TAG
 
     steps:
       - name: Checkout repository
@@ -31,13 +36,32 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Create Docker metadata
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ${{ github.repository }}
-          tags: |
-            type=raw,value=${{ env.TAG }}
+      - name: Set path and image name based on project
+        id: set_vars
+        run: |
+          PROJECT="${{ github.event.inputs.project }}"
+          
+          IFS=$'\n'
+          for entry in $PATH_MAP; do
+            KEY="${entry%%=*}"
+            VALUE="${entry#*=}"
+            if [ "$KEY" == "$PROJECT" ]; then
+              echo "path=$VALUE" >> $GITHUB_ENV
+            fi
+          done
+          
+          for entry in $IMAGE_MAP; do
+            KEY="${entry%%=*}"
+            VALUE="${entry#*=}"
+            if [ "$KEY" == "$PROJECT" ]; then
+              echo "image_name=$VALUE" >> $GITHUB_ENV
+            fi
+          done
+
+      - name: Generate date tag
+        id: date_tag
+        run: |
+          echo "tag=$(date +'%Y.%m.%d-%H-%M')" >> $GITHUB_ENV
 
       - name: Login to Docker Hub
         uses: docker/login-action@v3
@@ -48,6 +72,6 @@ jobs:
       - name: Build and push to Docker Hub
         uses: docker/build-push-action@v5
         with:
+          context: ${{ github.workspace }}/${{ env.path }}
           push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
+          tags: airndlab/${{ env.image_name }}:${{ env.tag }}
