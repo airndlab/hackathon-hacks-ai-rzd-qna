@@ -1,0 +1,17 @@
+[tool.poetry]
+name = "rzd-qna"
+version = "0.1.0"
+description = "RZD Q&A Service"
+license = "Apache-2.0"
+authors = ["AI RnD Lab Authors"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+fastapi = "^0.115.0"
+uvicorn = "^0.31.1"
+aiosqlite = "^0.20.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

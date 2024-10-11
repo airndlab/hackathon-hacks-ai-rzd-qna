@@ -1,9 +1,11 @@
 # РЖД: QnA чат-бот на основе базы знаний
 
 [![Docker Image Version (latest semver)](https://img.shields.io/docker/v/airndlab/rzd-bot?label=bot)](https://hub.docker.com/r/airndlab/rzd-bot)
+[![Docker Image Version (latest semver)](https://img.shields.io/docker/v/airndlab/rzd-qna?label=qna)](https://hub.docker.com/r/airndlab/rzd-qna)
 
 Состав проекта:
 
+- [Q&A сервис](qna)
 - [Telegram бот](bot)
 - [Конфигурация](config/README.md)
 
