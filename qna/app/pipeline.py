@@ -152,7 +152,7 @@ class ModelResponse(BaseModel):
     references: Optional[List[Reference]] = None
 
 
-def get_response(question: str) -> ModelResponse:
+async def get_answer(question: str) -> ModelResponse:
     response = basic_rag_pipeline.run(
         {
             "text_embedder": {"text": question},
@@ -184,6 +184,3 @@ def get_response(question: str) -> ModelResponse:
     torch.cuda.empty_cache()
 
     return ModelResponse(answer=response_text, references=references)
-
-
-print(get_response("Какие льготы есть детям?"))

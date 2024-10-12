@@ -14,12 +14,13 @@
 import logging
 import sys
 import uuid
+
 import uvicorn
 from fastapi import FastAPI
 from pydantic import BaseModel
 
 from app.chats import init_db, save_answer, set_feedback
-from app.model import get_answer
+from app.pipeline import get_answer
 
 logging.basicConfig(
     level=logging.INFO,
@@ -49,7 +50,8 @@ class Answer(BaseModel):
 
 @app.post("/api/answers", response_model=Answer)
 async def ask(request: Question) -> Answer:
-    answer = await get_answer(request.question)
+    answer_response = await get_answer(request.question)
+    answer = answer_response.answer
     answer_id = str(uuid.uuid4())
     await save_answer(
         answer_id=answer_id,
