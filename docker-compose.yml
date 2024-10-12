@@ -56,5 +56,15 @@ services:
     networks:
       - rzd-net
 
+  metabase:
+    image: metabase/metabase:v0.50.29
+    ports:
+      - 3000:3000
+    volumes:
+      - ./dbs:/data/dbs
+    environment:
+      - MB_DB_FILE=/data/dbs/metabase.db
+      - MB_DB_TYPE=sqlite
+
 networks:
   rzd-net:
