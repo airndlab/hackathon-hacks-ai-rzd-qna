@@ -21,6 +21,7 @@ import uvicorn
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 
+from app.bot import send_message
 from app.db import init_db, save_answer, set_feedback, save_chat, get_chat, set_profile, Chat, Profile
 from app.indexing import run_indexing_manually, start_observer
 from app.pipeline import get_answer
@@ -119,6 +120,7 @@ async def chat(chat_id: str) -> Chat:
 async def patch_chat(chat_id: str, profile: str) -> None:
     prof = await get_profile(profile)
     await set_profile(chat_id, prof)
+    await send_message(chat_id, f'Обновили данные тебе - радуйся!\n\n{profile}')
 
 
 class PutChatProfile(BaseModel):
