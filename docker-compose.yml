@@ -35,11 +35,12 @@ services:
       - ./dataset:/data/dataset
       - ./dbs:/data/dbs
     environment:
-      - QNA_CHATS_DB_PATH=/data/dbs/chats.db
+      - QNA_DB_PATH=/data/dbs/qna.db
       - DATASET_DIR_PATH=/data/dataset
       - MODEL_NAME=Qwen/Qwen2.5-14B-Instruct-GPTQ-Int4
       - MODEL_URL=http://vllm:8000/v1
       - MODEL_CONFIG_FILE_PATH=/config/model-config.json
+      - PROFILES_FILE_PATH=/config/profiles.json
     networks:
       - rzd-net
 
