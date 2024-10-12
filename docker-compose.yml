@@ -47,7 +47,7 @@ services:
       - rzd-net
 
   bot:
-    image: airndlab/rzd-bot:2024.10.12-22-03
+    image: airndlab/rzd-bot:2024.10.12-22-22
     volumes:
       - ./config:/config
     environment:
