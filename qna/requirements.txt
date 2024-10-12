@@ -2,6 +2,7 @@ fastapi
 uvicorn
 aiosqlite
 aiohttp
+pyyaml
 watchdog
 haystack-ai
 markdown-it-py

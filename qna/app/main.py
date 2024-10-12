@@ -12,12 +12,14 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 import logging
+import os
 import sys
 import threading
 import uuid
 from typing import List, Optional
 
 import uvicorn
+import yaml
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 
@@ -92,6 +94,40 @@ async def like(answer_id: str) -> None:
 @app.post("/api/answers/{answer_id}/disliking")
 async def dislike(answer_id: str) -> None:
     await set_feedback(answer_id, -1)
+
+
+# Определение структуры данных
+class FAQItem(BaseModel):
+    question: str
+    answer: str
+
+
+class FAQSection(BaseModel):
+    section: str
+    questions: list[FAQItem]
+
+
+FAQ_FILE_PATH = os.getenv('FAQ_FILE_PATH')
+
+
+def load_faq_from_yaml():
+    with open(FAQ_FILE_PATH, 'r', encoding='utf-8') as file:
+        faq_data = yaml.safe_load(file)
+    return faq_data["faq"]
+
+
+@app.get("/api/faq", response_model=list[FAQSection])
+async def get_faq():
+    faq = load_faq_from_yaml()
+
+    # Формируем строку из всех секций и вопросов
+    result = ""
+    for section in faq:
+        result += f"{section['section']}\n"
+        for question in section['questions']:
+            result += f"{question['question']}\n{question['answer']}\n\n"
+
+    return {"faq": result}
 
 
 # Вспомогательный функционал для демонстрации

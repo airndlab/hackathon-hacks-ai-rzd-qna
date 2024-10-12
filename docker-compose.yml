@@ -43,6 +43,7 @@ services:
       - MODEL_CONFIG_FILE_PATH=/config/model-config.json
       - PROFILES_FILE_PATH=/config/profiles.json
       - PROFILES_DEFAULT_ID=young
+      - FAQ_FILE_PATH=/config/faq.yaml
       - BOT_API_URL=http://bot:8088
     networks:
       - rzd-net
