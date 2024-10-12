@@ -64,7 +64,7 @@ services:
       - ./dbs:/data/dbs
     environment:
       - MB_DB_FILE=/data/dbs/metabase.db
-      - MB_DB_TYPE=sqlite
+      - MB_DB_TYPE=h2
 
 networks:
   rzd-net:
