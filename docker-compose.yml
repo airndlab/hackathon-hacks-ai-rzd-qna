@@ -20,7 +20,7 @@ services:
     command: --model Qwen/Qwen2.5-14B-Instruct-GPTQ-Int4 --quantization gptq --device cuda
 
   qna:
-    image: airndlab/rzd-qna:2024.10.12-11-15
+    image: airndlab/rzd-qna:2024.10.12-12-31
     deploy:
       resources:
         reservations:
@@ -43,8 +43,6 @@ services:
 
   bot:
     image: airndlab/rzd-bot:2024.10.12-10-56
-    depends_on:
-      - qna
     volumes:
       - ./config:/config
     environment:
