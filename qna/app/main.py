@@ -21,6 +21,7 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 
 from app.db import init_db, save_answer, set_feedback, save_chat, get_chat, set_profile, Chat, Profile
+from app.indexing import run_indexing_manually
 from app.pipeline import get_answer
 from app.profiles import get_profiles, get_profile, get_default_profile
 
