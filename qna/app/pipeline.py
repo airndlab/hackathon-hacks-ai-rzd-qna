@@ -73,19 +73,19 @@ ranker = TransformersSimilarityRanker(
     tokenizer_kwargs={"model_max_length": 500}
 )
 
-# MODEL_NAME = os.getenv('MODEL_NAME', 'Qwen/Qwen2.5-14B-Instruct-GPTQ-Int4')
-# MODEL_URL = os.getenv('MODEL_URL', 'http://vllm:8000/v1')
+MODEL_NAME = os.getenv('MODEL_NAME', 'Qwen/Qwen2.5-14B-Instruct-GPTQ-Int4')
+MODEL_URL = os.getenv('MODEL_URL', 'http://vllm:8000/v1')
 # Загрузка сообщений бота из файла
-# MODEL_CONFIG_FILE_PATH = os.getenv('MODEL_CONFIG_FILE_PATH')
-# with open(MODEL_CONFIG_FILE_PATH, 'r', encoding='utf-8') as file:
-#     MODEL_CONFIG = yaml.safe_load(file)
+MODEL_CONFIG_FILE_PATH = os.getenv('MODEL_CONFIG_FILE_PATH')
+with open(MODEL_CONFIG_FILE_PATH, 'r', encoding='utf-8') as file:
+    MODEL_CONFIG = yaml.safe_load(file)
 
 generator = OpenAIGenerator(
     # Для соблюдения контракта класса - добавляем заглушку
     api_key=Secret.from_token("VLLM-PLACEHOLDER-API-KEY"),
-    model='Qwen/Qwen2.5-14B-Instruct-GPTQ-Int4',
-    api_base_url='http://localhost:8000/v1',
-    generation_kwargs={"max_tokens": 2048},
+    model=MODEL_NAME,
+    api_base_url=MODEL_URL,
+    generation_kwargs=MODEL_CONFIG,
     timeout=600
 )
 
