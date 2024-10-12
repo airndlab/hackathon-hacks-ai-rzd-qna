@@ -9,8 +9,8 @@ services:
         reservations:
           devices:
             - driver: nvidia
-              device_ids: ['0']
-              capabilities: [gpu]
+              device_ids: [ '0' ]
+              capabilities: [ gpu ]
     ports:
       - 8000:8000
     environment:
@@ -18,6 +18,8 @@ services:
     volumes:
       - ~/.cache/huggingface:/root/.cache/huggingface
     command: --model Qwen/Qwen2.5-14B-Instruct-GPTQ-Int4 --quantization gptq --device cuda
+    networks:
+      - rzd-net
 
   qna:
     image: airndlab/rzd-qna:2024.10.12-12-31
@@ -26,8 +28,8 @@ services:
         reservations:
           devices:
             - driver: nvidia
-              device_ids: ['0']
-              capabilities: [gpu]
+              device_ids: [ '0' ]
+              capabilities: [ gpu ]
     ports:
       - 8080:8080
     volumes:
@@ -38,8 +40,10 @@ services:
       - QNA_CHATS_DB_PATH=/data/dbs/chats.db
       - DATASET_DIR_PATH=/data/dataset
       - MODEL_NAME=Qwen/Qwen2.5-14B-Instruct-GPTQ-Int4
-      - MODEL_URL=http://localhost:8000/v1
+      - MODEL_URL=http://vllm:8000/v1
       - MODEL_CONFIG_FILE_PATH=/config/model-config.json
+    networks:
+      - rzd-net
 
   bot:
     image: airndlab/rzd-bot:2024.10.12-10-56
@@ -49,3 +53,8 @@ services:
       - BOT_TOKEN=${BOT_TOKEN}
       - BOT_MESSAGES_FILE_PATH=/config/bot-messages.yml
       - QNA_URL=http://qna:8080
+    networks:
+      - rzd-net
+
+networks:
+  rzd-net:
