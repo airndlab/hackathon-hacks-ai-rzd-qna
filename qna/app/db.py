@@ -28,7 +28,7 @@ async def init_db() -> None:
     async with aiosqlite.connect(QNA_DB_PATH) as db:
         await db.execute('''
             CREATE TABLE IF NOT EXISTS answers (
-                answer_id TEXT PRIMARY KEY,
+                answer_id TEXT,
                 chat_id TEXT,
                 question TEXT,
                 answer TEXT,
@@ -48,7 +48,7 @@ async def init_db() -> None:
         ''')
         await db.execute('''
             CREATE TABLE IF NOT EXISTS chats (
-                chat_id TEXT PRIMARY KEY,
+                chat_id TEXT,
                 username TEXT,
                 type TEXT,
                 profile TEXT,
