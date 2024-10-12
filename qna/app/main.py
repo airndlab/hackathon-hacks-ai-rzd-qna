@@ -118,19 +118,20 @@ async def patch_chat(chat_id: str, profile: str) -> None:
 
 
 class PutChatProfile(BaseModel):
-    profile: Optional[str]
-    title: Optional[str]
-    description: Optional[str]
-    person_name: Optional[str]
-    organization: Optional[str]
-    region: Optional[str]
-    sex: Optional[str]
-    age: Optional[int]
-    child_count: Optional[int]
-    work_years: Optional[int]
-    veteran_of_labor: Optional[bool]
-    llm_request: Optional[str]
-    details_md: Optional[str]
+    profile: Optional[str] = None
+    title: Optional[str] = None
+    description: Optional[str] = None
+    person_name: Optional[str] = None
+    position: Optional[str] = None
+    organization: Optional[str] = None
+    region: Optional[str] = None
+    sex: Optional[str] = None
+    age: Optional[int] = None
+    child_count: Optional[int] = None
+    work_years: Optional[int] = None
+    veteran_of_labor: Optional[bool] = None
+    llm_request: Optional[str] = None
+    details_md: Optional[str] = None
 
 
 # noinspection DuplicatedCode
@@ -146,6 +147,8 @@ async def put_chat(chat_id: str, request: PutChatProfile) -> None:
         prof.description = request.description
     if request.person_name is not None:
         prof.person_name = request.person_name
+    if request.position is not None:
+        prof.position = request.position
     if request.organization is not None:
         prof.organization = request.organization
     if request.region is not None:
