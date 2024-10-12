@@ -20,7 +20,7 @@ services:
       - rzd-net
 
   qna:
-    image: airndlab/rzd-qna:2024.10.12-19-48
+    image: airndlab/rzd-qna:2024.10.12-21-21
     deploy:
       resources:
         reservations:
@@ -47,7 +47,7 @@ services:
       - rzd-net
 
   bot:
-    image: airndlab/rzd-bot:2024.10.12-10-56
+    image: airndlab/rzd-bot:2024.10.12-21-30
     volumes:
       - ./config:/config
     environment:
