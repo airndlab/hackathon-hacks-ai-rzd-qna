@@ -15,6 +15,30 @@ services:
       - HUGGING_FACE_HUB_TOKEN=${HUGGING_FACE_HUB_TOKEN}
     volumes:
       - ~/.cache/huggingface:/root/.cache/huggingface
-    ports:
-      - "8000:8000"
     command: --model Qwen/Qwen2.5-14B-Instruct-GPTQ-Int4 --quantization gptq --device cuda
+
+  qna:
+    image: airndlab/rzd-qna:2024.10.12-11-15
+    ports:
+      - 8080:8080
+    volumes:
+      - ./config:/config
+      - ./dataset:/data/dataset
+      - ./dbs:/data/dbs
+    environment:
+      - QNA_CHATS_DB_PATH=/data/dbs/chats.db
+      - DATASET_DIR_PATH=/data/dataset
+      - MODEL_NAME=Qwen/Qwen2.5-14B-Instruct-GPTQ-Int4
+      - MODEL_URL=http://vllm:8000/v1
+      - MODEL_CONFIG_FILE_PATH=/config/model-config.json
+
+  bot:
+    image: airndlab/rzd-bot:2024.10.12-10-56
+    depends_on:
+      - qna
+    volumes:
+      - ./config:/config
+    environment:
+      - BOT_TOKEN=${BOT_TOKEN}
+      - BOT_MESSAGES_FILE_PATH=/config/bot-messages.yml
+      - QNA_URL=http://qna:8080
