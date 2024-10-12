@@ -170,6 +170,12 @@ async def put_chat(chat_id: str, request: PutChatProfile) -> None:
     await set_profile(chat_id, prof)
 
 
+@app.post("/api/indexing")
+async def indexing():
+    await run_indexing_manually()
+    return {'status': 'started'}
+
+
 @app.on_event("startup")
 async def startup_event():
     await init_db()

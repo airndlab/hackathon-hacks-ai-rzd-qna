@@ -67,6 +67,15 @@ async def init_db() -> None:
                 details_md TEXT
             )
         ''')
+        await db.execute('''
+            CREATE TABLE IF NOT EXISTS indexing (
+                id TEXT,
+                status TEXT,
+                way TEXT,
+                started_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                finished_at DATETIME DEFAULT NULL
+            )
+        ''')
         await db.commit()
 
 
@@ -241,3 +250,26 @@ async def set_profile(chat_id: str, profile: Profile) -> None:
         ))
         await db.commit()
         logger.info(f'set profile: chat_id="{chat_id}" profile="{profile}"')
+
+
+async def save_indexing(indexing_id: str, status: str, way: str) -> None:
+    async with aiosqlite.connect(QNA_DB_PATH) as db:
+        await db.execute('''
+            INSERT INTO indexing (id, status, way) 
+            VALUES (?, ?, ?)
+        ''', (indexing_id, status, way))
+        await db.commit()
+        logger.info(
+            f'saved indexing: indexing_id="{indexing_id}" status="{status} way="{way}"'
+        )
+
+
+async def set_indexing(indexing_id: str, status: str) -> None:
+    async with aiosqlite.connect(QNA_DB_PATH) as db:
+        await db.execute('''
+            UPDATE indexing 
+            SET status = ?, finished_at = CURRENT_TIMESTAMP
+            WHERE id = ?
+        ''', (indexing_id, status))
+        await db.commit()
+        logger.info(f'set indexing: indexing_id="{indexing_id}" status="{status}"')
