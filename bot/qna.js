@@ -15,7 +15,7 @@ class Answer {
 // Получение ответа от пайплайна
 async function getAnswer(question, chatId) {
   try {
-    const request = { question, chatId: chatId };
+    const request = { question, chatId };
     const response = await axios.post(`${QNA_URL}/api/answers`, request);
 
     if (response.status === 200) {
@@ -55,9 +55,68 @@ async function dislikeAnswer(answerId) {
   }
 }
 
+async function getProfiles() {
+  try {
+    const response = await axios.get(`${QNA_URL}/api/profiles`);
+
+    if (response.status === 200) {
+      return response.data;
+    } else {
+      throw new Error(`Ошибка получения профилей: ${response.status} ${response.statusText}`);
+    }
+  } catch (error) {
+    throw new Error(`Ошибка получения профилей: ${error.message}`);
+  }
+}
+
+async function postChats(id, username) {
+  try {
+    const request = { id, username, type: 'telegram' };
+    const response = await axios.post(`${QNA_URL}/api/chats`, request);
+
+    if (response.status !== 200) {
+      throw new Error(`Ошибка отправки чата: ${response.status} ${response.statusText}`);
+    }
+  } catch (error) {
+    throw new Error(`Ошибка отправки чата: ${error.message}`);
+  }
+}
+
+async function getInfo(chatId) {
+  try {
+    const response = await axios.get(`${QNA_URL}/api/chats/${chatId}`);
+
+    if (response.status === 200) {
+      return response.data;
+    } else {
+      throw new Error(`Ошибка получения информации: ${response.status} ${response.statusText}`);
+    }
+  } catch (error) {
+    throw new Error(`Ошибка получения информации: ${error.message}`);
+  }
+}
+
+async function updateProfile(chatId, profileId) {
+  try {
+    const response = await axios.patch(`${QNA_URL}/api/chats/${chatId}/profiles/${profileId}`);
+
+    if (response.status === 200) {
+      return response.data;
+    } else {
+      throw new Error(`Ошибка обновления профиля: ${response.status} ${response.statusText}`);
+    }
+  } catch (error) {
+    throw new Error(`Ошибка обновления профиля: ${error.message}`);
+  }
+}
+
 // Экспортируем функции
 module.exports = {
   getAnswer,
   likeAnswer,
-  dislikeAnswer
+  dislikeAnswer,
+  getProfiles,
+  postChats,
+  getInfo,
+  updateProfile,
 };
