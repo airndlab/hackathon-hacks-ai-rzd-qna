@@ -34,14 +34,20 @@ class FileChangeEvent(BaseModel):
 
 class FileChangeHandler(FileSystemEventHandler):
     def on_modified(self, event):
+        if event.is_directory:
+            return
         if event.src_path.endswith(file_endings):
             logger.info(f'File modified: {event.src_path}')
 
     def on_created(self, event):
+        if event.is_directory:
+            return
         if event.src_path.endswith(file_endings):
             logger.info(f'File created: {event.src_path}')
 
     def on_deleted(self, event):
+        if event.is_directory:
+            return
         if event.src_path.endswith(file_endings):
             logger.info(f'File deleted: {event.src_path}')
 
