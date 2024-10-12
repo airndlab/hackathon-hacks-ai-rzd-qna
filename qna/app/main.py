@@ -13,6 +13,7 @@
 #  limitations under the License.
 import logging
 import sys
+import threading
 import uuid
 from typing import List, Optional
 
@@ -21,7 +22,7 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 
 from app.db import init_db, save_answer, set_feedback, save_chat, get_chat, set_profile, Chat, Profile
-from app.indexing import run_indexing_manually
+from app.indexing import run_indexing_manually, start_observer
 from app.pipeline import get_answer
 from app.profiles import get_profiles, get_profile, get_default_profile
 
@@ -182,6 +183,8 @@ async def indexing():
 @app.on_event("startup")
 async def startup_event():
     await init_db()
+    thread = threading.Thread(target=start_observer, daemon=True)
+    thread.start()
 
 
 if __name__ == "__main__":
