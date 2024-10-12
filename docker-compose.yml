@@ -6,7 +6,6 @@ services:
   vllm:
     image: vllm/vllm-openai:v0.6.2
     ipc: host
-    gpus: all
     deploy:
       resources:
         reservations:
