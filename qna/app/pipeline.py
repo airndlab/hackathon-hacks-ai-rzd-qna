@@ -83,9 +83,9 @@ with open(MODEL_CONFIG_FILE_PATH, 'r', encoding='utf-8') as file:
 generator = OpenAIGenerator(
     # Для соблюдения контракта класса - добавляем заглушку
     api_key=Secret.from_token("VLLM-PLACEHOLDER-API-KEY"),
-    model=MODEL_NAME,
-    api_base_url=MODEL_URL,
-    generation_kwargs=MODEL_CONFIG,
+    model='Qwen/Qwen2.5-14B-Instruct-GPTQ-Int4',
+    api_base_url='http://localhost:8000/v1',
+    generation_kwargs={"max_tokens": 2048},
     timeout=600
 )
 
