@@ -36,6 +36,7 @@ async def init_db() -> None:
                 feedback INTEGER DEFAULT 0,
                 profile TEXT,
                 person_name TEXT,
+                position TEXT,
                 organization TEXT,
                 region TEXT,
                 sex TEXT,
@@ -51,14 +52,19 @@ async def init_db() -> None:
                 username TEXT,
                 type TEXT,
                 profile TEXT,
+                title TEXT,
+                description TEXT,
                 person_name TEXT,
+                position TEXT,
                 organization TEXT,
                 region TEXT,
                 sex TEXT,
                 age INTEGER,
                 child_count INTEGER,
                 work_years INTEGER,
-                veteran_of_labor BOOLEAN
+                veteran_of_labor BOOLEAN,
+                llm_request TEXT,
+                details_md TEXT
             )
         ''')
         await db.commit()
@@ -66,18 +72,19 @@ async def init_db() -> None:
 
 class Profile(BaseModel):
     id: str
-    title: str
-    description: str
-    person_name: str
-    organization: str
-    region: str
-    sex: str
-    age: int
-    child_count: int
-    work_years: int
-    veteran_of_labor: bool
-    llm_request: str
-    details_md: str
+    title: Optional[str]
+    description: Optional[str]
+    person_name: Optional[str]
+    position: Optional[str]
+    organization: Optional[str]
+    region: Optional[str]
+    sex: Optional[str]
+    age: Optional[int]
+    child_count: Optional[int]
+    work_years: Optional[int]
+    veteran_of_labor: Optional[bool]
+    llm_request: Optional[str]
+    details_md: Optional[str]
 
 
 # Сохранить ответ
@@ -86,15 +93,15 @@ async def save_answer(answer_id: str, chat_id: str, question: str, answer: str, 
         await db.execute('''
             INSERT INTO answers (
                 answer_id, chat_id, question, answer,
-                profile, person_name, organization, region, sex, age, child_count, work_years, veteran_of_labor
+                profile, person_name, position, organization, region, sex, age, child_count, work_years, veteran_of_labor
             ) 
             VALUES (
                 ?, ?, ?, ?, 
-                ?, ?, ?, ?, ?, ?, ?, ?, ?
+                ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
             )
         ''', (
             answer_id, chat_id, question, answer,
-            profile.id, profile.person_name, profile.organization, profile.region, profile.sex,
+            profile.id, profile.person_name, profile.position, profile.organization, profile.region, profile.sex,
             profile.age, profile.child_count, profile.work_years, profile.veteran_of_labor
         ))
         await db.commit()
@@ -120,19 +127,20 @@ class Chat(BaseModel):
     id: str
     username: Optional[str]
     type: Optional[str]
-    profile: str
-    title: str
-    description: str
-    person_name: str
-    organization: str
-    region: str
-    sex: str
-    age: int
-    child_count: int
-    work_years: int
-    veteran_of_labor: bool
-    llm_request: str
-    details_md: str
+    profile: Optional[str]
+    title: Optional[str]
+    description: Optional[str]
+    person_name: Optional[str]
+    position: Optional[str]
+    organization: Optional[str]
+    region: Optional[str]
+    sex: Optional[str]
+    age: Optional[int]
+    child_count: Optional[int]
+    work_years: Optional[int]
+    veteran_of_labor: Optional[bool]
+    llm_request: Optional[str]
+    details_md: Optional[str]
 
     def as_profile(self) -> Profile:
         return Profile(
@@ -140,6 +148,7 @@ class Chat(BaseModel):
             title=self.title,
             description=self.description,
             person_name=self.person_name,
+            position=self.position,
             organization=self.organization,
             region=self.region,
             sex=self.sex,
@@ -157,17 +166,20 @@ async def save_chat(chat_id: str, username, chat_type, profile: Profile) -> None
         await db.execute('''
             INSERT INTO chats (
                 chat_id, username, type,
-                profile, person_name, organization, region, sex, age, child_count, work_years, veteran_of_labor,
+                profile, title, description, person_name, position, organization, region, sex,
+                age, child_count, work_years, veteran_of_labor,
                 llm_request, details_md
             ) 
             VALUES (
                 ?, ?, ?,
-                ?, ?, ?, ?, ?, ?, ?, ?, ?,
+                ?, ?, ?, ?, ?, ?, ?, ?,
+                ?, ?, ?, ?,
                 ?, ?
             )
         ''', (
             chat_id, username, chat_type,
-            profile.id, profile.person_name, profile.organization, profile.region, profile.sex,
+            profile.id, profile.title, profile.description, profile.person_name,
+            profile.position, profile.organization, profile.region, profile.sex,
             profile.age, profile.child_count, profile.work_years, profile.veteran_of_labor,
             profile.llm_request, profile.details_md
         ))
@@ -179,8 +191,15 @@ async def save_chat(chat_id: str, username, chat_type, profile: Profile) -> None
 
 async def get_chat(chat_id: str) -> Optional[Chat]:
     async with aiosqlite.connect(QNA_DB_PATH) as db:
-        async with db.execute("SELECT * FROM chats WHERE chat_id = ?", (chat_id,)) as cursor:
+        async with db.execute('''
+                SELECT chat_id, username, type,
+                    profile, title, description, person_name, position, organization, region, sex,
+                    age, child_count, work_years, veteran_of_labor,
+                    llm_request, details_md
+                FROM chats WHERE chat_id = ?
+            ''', (chat_id,)) as cursor:
             chat = await cursor.fetchone()
+            print(chat)
             if chat:
                 return Chat(
                     id=chat[0],
@@ -190,15 +209,16 @@ async def get_chat(chat_id: str) -> Optional[Chat]:
                     title=chat[4],
                     description=chat[5],
                     person_name=chat[6],
-                    organization=chat[7],
-                    region=chat[8],
-                    sex=chat[9],
-                    age=chat[10],
-                    child_count=chat[11],
-                    work_years=chat[12],
-                    veteran_of_labor=chat[13],
-                    llm_request=chat[14],
-                    details_md=chat[15],
+                    position=chat[7],
+                    organization=chat[8],
+                    region=chat[9],
+                    sex=chat[10],
+                    age=chat[11],
+                    child_count=chat[12],
+                    work_years=chat[13],
+                    veteran_of_labor=chat[14],
+                    llm_request=chat[15],
+                    details_md=chat[16],
                 )
             else:
                 return None
@@ -208,12 +228,13 @@ async def set_profile(chat_id: str, profile: Profile) -> None:
     async with aiosqlite.connect(QNA_DB_PATH) as db:
         await db.execute('''
             UPDATE chats 
-            SET profile = ?, person_name = ?, organization = ?, region = ?, sex = ?,
+            SET profile = ?, title = ?, description = ?, person_name = ?, position = ?, organization = ?, region = ?, sex = ?,
                 age = ?, child_count = ?, work_years = ?, veteran_of_labor = ?,
                 llm_request = ?, details_md = ?
             WHERE chat_id = ?
         ''', (
-            profile.id, profile.person_name, profile.organization, profile.region, profile.sex,
+            profile.id, profile.title, profile.description, profile.person_name,
+            profile.position, profile.organization, profile.region, profile.sex,
             profile.age, profile.child_count, profile.work_years, profile.veteran_of_labor,
             profile.llm_request, profile.details_md,
             chat_id
