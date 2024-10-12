@@ -17,4 +17,4 @@ services:
       - ~/.cache/huggingface:/root/.cache/huggingface
     ports:
       - "8000:8000"
-    command: --model Qwen/Qwen2.5-14B-Instruct-GPTQ-Int4 --quantization gptq --device cuda:0
+    command: --model Qwen/Qwen2.5-14B-Instruct-GPTQ-Int4 --quantization gptq --device cuda
