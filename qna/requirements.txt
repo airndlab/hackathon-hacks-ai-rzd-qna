@@ -1,6 +1,7 @@
 fastapi
 uvicorn
 aiosqlite
+watchdog
 haystack-ai
 markdown-it-py
 mdit_plain
