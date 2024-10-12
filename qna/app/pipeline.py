@@ -58,7 +58,11 @@ preprocessing_pipeline.run({
     "pypdf_converter": {"meta": {"organization": "RZHD"}},
 })
 
-text_embedder = SentenceTransformersTextEmbedder(model="intfloat/multilingual-e5-large", device=device)
+text_embedder = SentenceTransformersTextEmbedder(
+    model="intfloat/multilingual-e5-large",
+    device=device,
+    timeout=600
+)
 
 retriever = InMemoryEmbeddingRetriever(document_store, top_k=30)
 
