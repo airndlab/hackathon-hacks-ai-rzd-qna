@@ -7,3 +7,4 @@ mdit_plain
 pypdf
 datasets>=2.6.1
 sentence-transformers>=3.0.0
+transformers[torch,sentencepiece]
