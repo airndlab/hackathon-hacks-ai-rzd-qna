@@ -24,7 +24,7 @@ from pydantic import BaseModel
 from app.bot import send_message
 from app.db import init_db, save_answer, set_feedback, save_chat, get_chat, set_profile, Chat, Profile
 from app.indexing import run_indexing_manually, start_observer
-from app.pipeline import get_answer
+from app.pipeline5 import get_chat_response
 from app.profiles import get_profiles, get_profile, get_default_profile
 
 logging.basicConfig(
@@ -59,8 +59,20 @@ async def ask(request: Question) -> Answer:
     question = request.question
     curr_chat = await get_chat(chat_id)
     prof = curr_chat.as_profile()
-    answer_response = await get_answer(question)
+    answer_response = await get_chat_response(
+        question=question,
+        user_name=curr_chat.person_name,
+        user_info=f'Возраст:{curr_chat.age}'
+                  f'\nДолжность:{curr_chat.position}'
+                  f'\nРегион: {curr_chat.region}'
+                  f'\nСтаж работы: {curr_chat.work_years}'
+                  f'\nКоличество детей:{curr_chat.child_count}',
+        user_org=curr_chat.organization
+    )
     answer = answer_response.answer
+    if not answer_response.references:
+        refs = "\n".join(f"{item.document}: {item.paragraph}" for item in answer_response.references)
+        answer = f'{answer}\n\nИсточники:\n{refs}'
     answer_id = str(uuid.uuid4())
     await save_answer(
         answer_id=answer_id,
