@@ -147,13 +147,17 @@ class NewChat(BaseModel):
 async def new_chat(request: NewChat) -> Chat:
     chat_id = request.id
     prof = await get_default_profile()
-    await save_chat(
-        chat_id=chat_id,
-        username=request.username,
-        chat_type=request.type,
-        profile=prof
-    )
-    return await get_chat(chat_id)
+    old_chat = await get_chat(chat_id)
+    if old_chat is None:
+        await save_chat(
+            chat_id=chat_id,
+            username=request.username,
+            chat_type=request.type,
+            profile=prof
+        )
+        return await get_chat(chat_id)
+    else:
+        return old_chat
 
 
 @app.get("/api/chats/{chat_id}", response_model=Chat)
