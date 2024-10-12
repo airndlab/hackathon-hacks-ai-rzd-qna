@@ -20,7 +20,7 @@ import uvicorn
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 
-from app.db import init_db, save_answer, set_feedback, save_chat, get_chat, set_profile, Chat, Profile, get_chat_profile
+from app.db import init_db, save_answer, set_feedback, save_chat, get_chat, set_profile, Chat, Profile
 from app.pipeline import get_answer
 from app.profiles import get_profiles, get_profile, get_default_profile
 
@@ -54,7 +54,8 @@ class Answer(BaseModel):
 async def ask(request: Question) -> Answer:
     chat_id = request.chatId
     question = request.question
-    prof = await get_chat_profile(chat_id)
+    curr_chat = await get_chat(chat_id)
+    prof = curr_chat.as_profile()
     answer_response = await get_answer(question)
     answer = answer_response.answer
     answer_id = str(uuid.uuid4())
@@ -111,8 +112,58 @@ async def chat(chat_id: str) -> Chat:
 
 
 @app.patch("/api/chats/{chat_id}/profiles/{profile}")
-async def chat(chat_id: str, profile: str) -> None:
+async def patch_chat(chat_id: str, profile: str) -> None:
     prof = await get_profile(profile)
+    await set_profile(chat_id, prof)
+
+
+class PutChatProfile(BaseModel):
+    profile: Optional[str]
+    title: Optional[str]
+    description: Optional[str]
+    person_name: Optional[str]
+    organization: Optional[str]
+    region: Optional[str]
+    sex: Optional[str]
+    age: Optional[int]
+    child_count: Optional[int]
+    work_years: Optional[int]
+    veteran_of_labor: Optional[bool]
+    llm_request: Optional[str]
+    details_md: Optional[str]
+
+
+# noinspection DuplicatedCode
+@app.put("/api/chats/{chat_id}/profiles")
+async def put_chat(chat_id: str, request: PutChatProfile) -> None:
+    curr_chat = await get_chat(chat_id)
+    prof = curr_chat.as_profile()
+    if request.profile is not None:
+        prof.id = request.profile
+    if request.title is not None:
+        prof.title = request.title
+    if request.description is not None:
+        prof.description = request.description
+    if request.person_name is not None:
+        prof.person_name = request.person_name
+    if request.organization is not None:
+        prof.organization = request.organization
+    if request.region is not None:
+        prof.region = request.region
+    if request.sex is not None:
+        prof.sex = request.sex
+    if request.age is not None:
+        prof.age = request.age
+    if request.child_count is not None:
+        prof.child_count = request.child_count
+    if request.work_years is not None:
+        prof.work_years = request.work_years
+    if request.veteran_of_labor is not None:
+        prof.veteran_of_labor = request.veteran_of_labor
+    if request.llm_request is not None:
+        prof.llm_request = request.llm_request
+    if request.details_md is not None:
+        prof.details_md = request.details_md
     await set_profile(chat_id, prof)
 
 

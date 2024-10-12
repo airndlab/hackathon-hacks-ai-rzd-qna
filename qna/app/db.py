@@ -134,6 +134,23 @@ class Chat(BaseModel):
     llm_request: str
     details_md: str
 
+    def as_profile(self) -> Profile:
+        return Profile(
+            id=self.profile,
+            title=self.title,
+            description=self.description,
+            person_name=self.person_name,
+            organization=self.organization,
+            region=self.region,
+            sex=self.sex,
+            age=self.age,
+            child_count=self.child_count,
+            work_years=self.work_years,
+            veteran_of_labor=self.veteran_of_labor,
+            llm_request=self.llm_request,
+            details_md=self.details_md
+        )
+
 
 async def save_chat(chat_id: str, username, chat_type, profile: Profile) -> None:
     async with aiosqlite.connect(QNA_DB_PATH) as db:
