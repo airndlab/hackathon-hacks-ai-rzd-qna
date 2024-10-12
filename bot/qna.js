@@ -15,7 +15,7 @@ class Answer {
 // Получение ответа от пайплайна
 async function getAnswer(question, chatId) {
   try {
-    const request = { question, chat_id: chatId };
+    const request = { question, chatId: chatId };
     const response = await axios.post(`${QNA_URL}/api/answers`, request);
 
     if (response.status === 200) {
