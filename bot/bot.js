@@ -1,10 +1,11 @@
 // Импортируем необходимые модули
 const { Telegraf, Markup } = require('telegraf');
+const { message } = require('telegraf/filters');
 const fs = require('fs'); // Модуль для работы с файловой системой
 const yaml = require('js-yaml'); // Библиотека для работы с YAML
 const { createLogger, format, transports } = require('winston');
 const { botToken, messagesPath } = require('./config');
-const { getAnswer, likeAnswer, dislikeAnswer } = require('./qna');
+const { getAnswer, likeAnswer, dislikeAnswer, getProfiles, postChats, getInfo, updateProfile } = require('./qna');
 
 // Вставьте сюда ваш токен
 const bot = new Telegraf(botToken);
@@ -23,7 +24,75 @@ const logger = createLogger({
 const botMessages = loadMessages();
 
 // Обработчик команды /start
-bot.start((ctx) => ctx.reply(botMessages.start));
+bot.start(async (ctx) => {
+  try {
+    const profiles = await getProfiles();
+    await postChats(ctx.chat.id.toString(), ctx.from.username);
+    const markup = createProfilesMarkup(profiles);
+    ctx.reply(botMessages.start, { ...markup, parse_mode: 'Markdown' });
+  } catch (error) {
+    ctx.reply(botMessages.error);
+    logger.error('Ошибка при старте бота:', error);
+  }
+});
+
+bot.command('info', async (ctx) => {
+  try {
+    const { details_md } = await getInfo(ctx.chat.id.toString());
+
+    const markup = createInfoMarkup();
+    ctx.reply(details_md, { ...markup, parse_mode: 'Markdown' });
+  } catch (error) {
+    ctx.reply(botMessages.error);
+    logger.error('Ошибка при получении информации:', error);
+  }
+});
+
+// Обработчик текстовых сообщений (вопросов)
+bot.on(message('text'), async (ctx) => {
+  const question = ctx.message.text;
+  try {
+    const answerData = await getAnswer(question, ctx.chat.id.toString());
+    const text = createAnswerText(answerData);
+    const markup = createAnswerMarkup(answerData.id);
+    await ctx.reply(text, markup);
+  } catch (error) {
+    ctx.reply(botMessages.error);
+    logger.error('Ошибка при обработке вопроса:', error);
+  }
+});
+
+//Обработчики колбэков
+bot.action(/^profile_btn:(.+)$/, async (ctx) => {
+  const callbackData = ctx.callbackQuery.data;
+  const [, profileId] = callbackData.split(':'); // Разделяем данные
+
+  try {
+    await updateProfile(ctx.chat.id.toString(), profileId);
+    const { details_md } = await getInfo(ctx.chat.id.toString());
+
+    await ctx.answerCbQuery();
+    ctx.reply(
+        `*Отлично, вы выбрали следующую персону:*\n\n${details_md}`,
+        { parse_mode: 'Markdown' },
+    );
+  } catch (error) {
+    ctx.reply(botMessages.error);
+    logger.error('Ошибка при получении информации:', error);
+  }
+});
+
+bot.action('change_profile', async (ctx) => {
+  try {
+    const profiles = await getProfiles();
+    const markup = createProfilesMarkup(profiles);
+    await ctx.answerCbQuery();
+    ctx.reply('Выберите профиль', { ...markup, parse_mode: 'Markdown' });
+  } catch (error) {
+    ctx.reply(botMessages.error);
+    logger.error('Ошибка при обработке событий:', error);
+  }
+});
 
 // Обработчик для лайка
 bot.action(/^like:(.+)$/, async (ctx) => {
@@ -39,20 +108,6 @@ bot.action(/^dislike:(.+)$/, async (ctx) => {
   await ctx.answerCbQuery(botMessages.dislike);
 });
 
-// Обработчик текстовых сообщений (вопросов)
-bot.on('text', async (ctx) => {
-  const question = ctx.message.text;
-  try {
-    const answerData = await getAnswer(question, ctx.chat.id.toString());
-    const text = createAnswerText(answerData);
-    const markup = createAnswerMarkup(answerData.id);
-    await ctx.reply(text, markup);
-  } catch (error) {
-    ctx.reply(botMessages.error);
-    logger.error('Ошибка при обработке вопроса:', error);
-  }
-});
-
 // Вспомогательные функции
 function createAnswerMarkup(answerId) {
   return Markup.inlineKeyboard([
@@ -65,6 +120,17 @@ function createAnswerText(response) {
   return botMessages.answer.replace('{answer}', response.answer);
 }
 
+function createProfilesMarkup(profiles) {
+  return Markup.inlineKeyboard(profiles.map(({ id, title }) => [
+    Markup.button.callback(title, `profile_btn:${id}`)
+  ]));
+}
+
+function createInfoMarkup() {
+  return Markup.inlineKeyboard([
+    Markup.button.callback('Сменить профиль', 'change_profile'),
+  ]);
+}
 
 // Функция для загрузки сообщений из YAML файла
 function loadMessages() {
