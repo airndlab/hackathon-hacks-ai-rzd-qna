@@ -20,7 +20,7 @@ services:
       - rzd-net
 
   qna:
-    image: airndlab/rzd-qna:2024.10.12-14-58
+    image: airndlab/rzd-qna:2024.10.12-18-24
     deploy:
       resources:
         reservations:
@@ -42,6 +42,7 @@ services:
       - MODEL_URL=http://vllm:8000/v1
       - MODEL_CONFIG_FILE_PATH=/config/model-config.json
       - PROFILES_FILE_PATH=/config/profiles.json
+      - PROFILES_DEFAULT_ID=young
     networks:
       - rzd-net
 
