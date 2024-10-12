@@ -90,8 +90,8 @@ async def profiles() -> List[Profile]:
 
 class NewChat(BaseModel):
     id: str
-    username: Optional[str]
-    type: Optional[str]
+    username: Optional[str] = None
+    type: Optional[str] = None
 
 
 @app.post("/api/chats", response_model=Chat)
