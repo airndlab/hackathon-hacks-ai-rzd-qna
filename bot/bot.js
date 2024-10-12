@@ -50,21 +50,7 @@ bot.command('info', async (ctx) => {
 
 // Обработчик текстовых сообщений (вопросов)
 bot.on(message('text'), async (ctx) => {
-  let question
-
-  if (ctx.chat.type === 'private') {
-    question = ctx.message.text
-  } else if (ctx.chat.type === 'group' || ctx.chat.type === 'supergroup') {
-    const botMentioned = ctx.message.entities && ctx.message.entities.some(entity =>
-      entity.type === 'mention' && ctx.message.text.includes(`@${ctx.botInfo.username}`))
-
-    if (botMentioned) {
-      question = ctx.message.text.replace(`@${ctx.botInfo.username}`, '').trim()
-    } else {
-      return
-    }
-  }
-
+  const question = ctx.message.text;
   try {
     const answerData = await getAnswer(question, ctx.chat.id.toString());
     const text = createAnswerText(answerData);
