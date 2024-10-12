@@ -22,7 +22,7 @@ from pydantic import BaseModel
 
 from app.db import init_db, save_answer, set_feedback, save_chat, get_chat, set_profile, Chat
 from app.pipeline import get_answer
-from app.profiles import get_profiles
+from app.profiles import get_profiles, Profile
 
 logging.basicConfig(
     level=logging.INFO,
@@ -72,11 +72,6 @@ async def like(answer_id: str) -> None:
 @app.post("/api/answers/{answer_id}/disliking")
 async def dislike(answer_id: str) -> None:
     await set_feedback(answer_id, -1)
-
-
-class Profile(BaseModel):
-    id: str
-    text: str
 
 
 @app.get("/api/profiles", response_model=List[Profile])
