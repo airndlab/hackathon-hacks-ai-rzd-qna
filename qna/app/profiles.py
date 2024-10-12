@@ -1,11 +1,11 @@
+import json
 import os
 
-import yaml
 from pydantic import BaseModel
 
 PROFILES_FILE_PATH = os.getenv('PROFILES_FILE_PATH')
 with open(PROFILES_FILE_PATH, 'r', encoding='utf-8') as file:
-    PROFILES = yaml.safe_load(file)
+    PROFILES = json.load(file)
 
 
 class Profile(BaseModel):

@@ -3,7 +3,7 @@ import json
 import os
 from pathlib import Path
 from typing import List, Optional
-import yaml
+
 import torch
 from haystack import Pipeline
 from haystack.components.builders import PromptBuilder
@@ -78,7 +78,7 @@ MODEL_URL = os.getenv('MODEL_URL', 'http://vllm:8000/v1')
 # Загрузка сообщений бота из файла
 MODEL_CONFIG_FILE_PATH = os.getenv('MODEL_CONFIG_FILE_PATH')
 with open(MODEL_CONFIG_FILE_PATH, 'r', encoding='utf-8') as file:
-    MODEL_CONFIG = yaml.safe_load(file)
+    MODEL_CONFIG = json.load(file)
 
 generator = OpenAIGenerator(
     # Для соблюдения контракта класса - добавляем заглушку
