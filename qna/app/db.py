@@ -33,7 +33,16 @@ async def init_db() -> None:
                 question TEXT,
                 answer TEXT,
                 answered_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-                feedback INTEGER DEFAULT 0
+                feedback INTEGER DEFAULT 0,
+                profile TEXT,
+                person_name TEXT,
+                organization TEXT,
+                region TEXT,
+                sex TEXT,
+                age INTEGER,
+                child_count INTEGER,
+                work_years INTEGER,
+                veteran_of_labor BOOLEAN
             )
         ''')
         await db.execute('''
@@ -41,23 +50,57 @@ async def init_db() -> None:
                 chat_id TEXT PRIMARY KEY,
                 username TEXT,
                 type TEXT,
-                profile TEXT DEFAULT 'default'
+                profile TEXT,
+                person_name TEXT,
+                organization TEXT,
+                region TEXT,
+                sex TEXT,
+                age INTEGER,
+                child_count INTEGER,
+                work_years INTEGER,
+                veteran_of_labor BOOLEAN
             )
         ''')
         await db.commit()
 
 
+class Profile(BaseModel):
+    id: str
+    title: str
+    description: str
+    person_name: str
+    organization: str
+    region: str
+    sex: str
+    age: int
+    child_count: int
+    work_years: int
+    veteran_of_labor: bool
+    llm_request: str
+    details_md: str
+
+
 # Сохранить ответ
-async def save_answer(answer_id: str, chat_id: str, question: str, answer: str) -> None:
+async def save_answer(answer_id: str, chat_id: str, question: str, answer: str, profile: Profile) -> None:
     async with aiosqlite.connect(QNA_DB_PATH) as db:
         await db.execute('''
-            INSERT INTO answers (answer_id, chat_id, question, answer) 
-            VALUES (?, ?, ?, ?)
-        ''', (answer_id, chat_id, question, answer))
+            INSERT INTO answers (
+                answer_id, chat_id, question, answer,
+                profile, person_name, organization, region, sex, age, child_count, work_years, veteran_of_labor
+            ) 
+            VALUES (
+                ?, ?, ?, ?, 
+                ?, ?, ?, ?, ?, ?, ?, ?, ?
+            )
+        ''', (
+            answer_id, chat_id, question, answer,
+            profile.id, profile.person_name, profile.organization, profile.region, profile.sex,
+            profile.age, profile.child_count, profile.work_years, profile.veteran_of_labor
+        ))
         await db.commit()
         logger.info(
-            f'saved answer: answer_id="{answer_id}" chat_id="{chat_id}"'
-            f'question="{question}" answer="{answer}"'
+            f'saved answer: answer_id="{answer_id}" chat_id="{chat_id}" '
+            f'question="{question}" answer="{answer}" profile={profile}'
         )
 
 
@@ -78,17 +121,42 @@ class Chat(BaseModel):
     username: Optional[str]
     type: Optional[str]
     profile: str
+    title: str
+    description: str
+    person_name: str
+    organization: str
+    region: str
+    sex: str
+    age: int
+    child_count: int
+    work_years: int
+    veteran_of_labor: bool
+    llm_request: str
+    details_md: str
 
 
-async def save_chat(chat_id: str, username, chat_type) -> None:
+async def save_chat(chat_id: str, username, chat_type, profile: Profile) -> None:
     async with aiosqlite.connect(QNA_DB_PATH) as db:
         await db.execute('''
-            INSERT INTO chats (chat_id, username, type) 
-            VALUES (?, ?, ?)
-        ''', (chat_id, username, chat_type))
+            INSERT INTO chats (
+                chat_id, username, type,
+                profile, person_name, organization, region, sex, age, child_count, work_years, veteran_of_labor,
+                llm_request, details_md
+            ) 
+            VALUES (
+                ?, ?, ?,
+                ?, ?, ?, ?, ?, ?, ?, ?, ?,
+                ?, ?
+            )
+        ''', (
+            chat_id, username, chat_type,
+            profile.id, profile.person_name, profile.organization, profile.region, profile.sex,
+            profile.age, profile.child_count, profile.work_years, profile.veteran_of_labor,
+            profile.llm_request, profile.details_md
+        ))
         await db.commit()
         logger.info(
-            f'saved chat: chat_id="{chat_id}" username="{username} type="{chat_type}"'
+            f'saved chat: chat_id="{chat_id}" username="{username} type="{chat_type}" profile="{profile}"'
         )
 
 
@@ -102,17 +170,36 @@ async def get_chat(chat_id: str) -> Optional[Chat]:
                     username=chat[1],
                     type=chat[2],
                     profile=chat[3],
+                    title=chat[4],
+                    description=chat[5],
+                    person_name=chat[6],
+                    organization=chat[7],
+                    region=chat[8],
+                    sex=chat[9],
+                    age=chat[10],
+                    child_count=chat[11],
+                    work_years=chat[12],
+                    veteran_of_labor=chat[13],
+                    llm_request=chat[14],
+                    details_md=chat[15],
                 )
             else:
                 return None
 
 
-async def set_profile(chat_id: str, profile: str) -> None:
+async def set_profile(chat_id: str, profile: Profile) -> None:
     async with aiosqlite.connect(QNA_DB_PATH) as db:
         await db.execute('''
             UPDATE chats 
-            SET profile = ? 
+            SET profile = ?, person_name = ?, organization = ?, region = ?, sex = ?,
+                age = ?, child_count = ?, work_years = ?, veteran_of_labor = ?,
+                llm_request = ?, details_md = ?
             WHERE chat_id = ?
-        ''', (profile, chat_id))
+        ''', (
+            profile.id, profile.person_name, profile.organization, profile.region, profile.sex,
+            profile.age, profile.child_count, profile.work_years, profile.veteran_of_labor,
+            profile.llm_request, profile.details_md,
+            chat_id
+        ))
         await db.commit()
         logger.info(f'set profile: chat_id="{chat_id}" profile="{profile}"')

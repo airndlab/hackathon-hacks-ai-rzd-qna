@@ -20,9 +20,9 @@ import uvicorn
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 
-from app.db import init_db, save_answer, set_feedback, save_chat, get_chat, set_profile, Chat
+from app.db import init_db, save_answer, set_feedback, save_chat, get_chat, set_profile, Chat, Profile, get_chat_profile
 from app.pipeline import get_answer
-from app.profiles import get_profiles, Profile
+from app.profiles import get_profiles, get_profile, get_default_profile
 
 logging.basicConfig(
     level=logging.INFO,
@@ -52,14 +52,18 @@ class Answer(BaseModel):
 
 @app.post("/api/answers", response_model=Answer)
 async def ask(request: Question) -> Answer:
-    answer_response = await get_answer(request.question)
+    chat_id = request.chatId
+    question = request.question
+    prof = await get_chat_profile(chat_id)
+    answer_response = await get_answer(question)
     answer = answer_response.answer
     answer_id = str(uuid.uuid4())
     await save_answer(
         answer_id=answer_id,
-        chat_id=request.chatId,
-        question=request.question,
+        chat_id=chat_id,
+        question=question,
         answer=answer,
+        profile=prof
     )
     return Answer(id=answer_id, answer=answer)
 
@@ -87,8 +91,15 @@ class NewChat(BaseModel):
 
 @app.post("/api/chats", response_model=Chat)
 async def new_chat(request: NewChat) -> Chat:
-    await save_chat(request.id, request.username, request.type)
-    return await get_chat(request.id)
+    chat_id = request.id
+    prof = await get_default_profile()
+    await save_chat(
+        chat_id=chat_id,
+        username=request.username,
+        chat_type=request.type,
+        profile=prof
+    )
+    return await get_chat(chat_id)
 
 
 @app.get("/api/chats/{chat_id}", response_model=Chat)
@@ -96,12 +107,13 @@ async def chat(chat_id: str) -> Chat:
     result = await get_chat(chat_id)
     if result:
         return result
-    raise HTTPException(status_code=404, detail="Item not found")
+    raise HTTPException(status_code=404, detail="Chat not found")
 
 
 @app.patch("/api/chats/{chat_id}/profiles/{profile}")
 async def chat(chat_id: str, profile: str) -> None:
-    await set_profile(chat_id, profile)
+    prof = await get_profile(profile)
+    await set_profile(chat_id, prof)
 
 
 @app.on_event("startup")
