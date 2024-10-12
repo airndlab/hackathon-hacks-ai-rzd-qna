@@ -376,7 +376,7 @@ def get_chat_response(question: str, user_name: str = "", user_info: str = "", u
     expanded_questions = expander.run(
         query=question,
         user_info=user_info
-    )['queries']
+    )['queries'][:5]
 
     response = basic_rag_pipeline.run({
         "text_embedder": {"queries": expanded_questions},
