@@ -79,6 +79,8 @@ async def dislike(answer_id: str) -> None:
     await set_feedback(answer_id, -1)
 
 
+# Вспомогательный функционал для демонстрации
+
 @app.get("/api/profiles", response_model=List[Profile])
 async def profiles() -> List[Profile]:
     return await get_profiles()
