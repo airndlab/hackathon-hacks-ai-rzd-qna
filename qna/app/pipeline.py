@@ -1,5 +1,6 @@
 import gc
 import json
+import os
 from pathlib import Path
 from typing import List, Optional
 
@@ -50,8 +51,8 @@ preprocessing_pipeline.connect("document_cleaner", "document_splitter")
 preprocessing_pipeline.connect("document_splitter", "document_embedder")
 preprocessing_pipeline.connect("document_embedder", "document_writer")
 
-output_dir = "/data/dataset"
-source_docs = list(Path(output_dir).glob("**/*"))
+DATASET_DIR_PATH = os.getenv('DATASET_DIR_PATH')
+source_docs = list(Path(DATASET_DIR_PATH).glob("**/*"))
 
 preprocessing_pipeline.run({
     "file_type_router": {"sources": source_docs},
