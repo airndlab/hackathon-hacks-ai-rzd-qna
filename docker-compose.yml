@@ -38,7 +38,7 @@ services:
       - QNA_CHATS_DB_PATH=/data/dbs/chats.db
       - DATASET_DIR_PATH=/data/dataset
       - MODEL_NAME=Qwen/Qwen2.5-14B-Instruct-GPTQ-Int4
-      - MODEL_URL=http://vllm:8000/v1
+      - MODEL_URL=http://localhost:8000/v1
       - MODEL_CONFIG_FILE_PATH=/config/model-config.json
 
   bot:
