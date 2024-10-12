@@ -60,8 +60,7 @@ preprocessing_pipeline.run({
 
 text_embedder = SentenceTransformersTextEmbedder(
     model="intfloat/multilingual-e5-large",
-    device=device,
-    timeout=600
+    device=device
 )
 
 retriever = InMemoryEmbeddingRetriever(document_store, top_k=30)
