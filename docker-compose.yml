@@ -35,6 +35,7 @@ services:
       - ./dataset:/data/dataset
       - ./dbs:/data/dbs
     environment:
+      - HF_HUB_DOWNLOAD_TIMEOUT=600
       - QNA_DB_PATH=/data/dbs/qna.db
       - DATASET_DIR_PATH=/data/dataset
       - MODEL_NAME=Qwen/Qwen2.5-14B-Instruct-GPTQ-Int4
