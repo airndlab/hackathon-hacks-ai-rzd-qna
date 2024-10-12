@@ -152,3 +152,6 @@ bot.launch()
 // Обработка завершения работы
 process.once('SIGINT', () => bot.stop('SIGINT'));
 process.once('SIGTERM', () => bot.stop('SIGTERM'));
+
+// Включение API
+require('./api')(bot, logger);
