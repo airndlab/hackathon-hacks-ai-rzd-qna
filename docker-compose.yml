@@ -20,7 +20,7 @@ services:
       - rzd-net
 
   qna:
-    image: airndlab/rzd-qna:2024.10.13-02-46
+    image: airndlab/rzd-qna:2024.10.13-06-34
     deploy:
       resources:
         reservations:
