@@ -391,7 +391,69 @@ Answer:
 chat_system_message = ChatMessage.from_system(chat_system_prompt)
 chat_user_message = ChatMessage.from_user(chat_user_template)
 chat_messages = [chat_system_message, chat_user_message]
-chat_prompt_builder = ChatPromptBuilder(variables=["documents", "question", "user_name", "user_info"])
+
+changes_system_prompt = """
+You are a high-class support chatbot for "РЖД" (RZD), a Russian railway company.
+
+Your task is to inform the user about opportunities, benefits, incentives, material assistance, and compensations that are available to them, based on the provided context and considering any changes in their personal information.
+
+**Rules to follow**:
+- Address the user respectfully, using "вы", and by their name if provided.
+- Consider the additional user information provided, especially changes in their personal data.
+- Provide detailed information about new opportunities or benefits that are now available to the user due to the changes in their information.
+- Do not include any information that is not in the provided context.
+- Never generate information outside the provided context.
+- Where applicable, for ease of reading, format the answer using line breaks and bulleted lists.
+- Limit your answer to 10-12 sentences
+
+**Additional Instructions**:
+- After providing the information, include a JSON object that lists the document names and paragraph numbers (if specified at the beginning of the content) that were used to generate the information.
+- **Do not include** the JSON object if there are no relevant opportunities or benefits to inform the user about.
+- The format should be:
+  `[{"document": <Document Name>, "paragraph": <Paragraph Number>}, {"document": <Document Name>, "paragraph": <Paragraph Number>}]`
+- `<Document Name>` is exactly what is taken from `document.meta['file_path']`.
+- If a paragraph number is not specified at the beginning of the document content, set `"paragraph"` to `"0"`.
+- Only include documents in the list if you used them to generate the information.
+- Ensure that the JSON is properly formatted.
+- Here are some examples of how to format the JSON:
+  - `[{"document": "Коллективный договор", "paragraph": "1.1"}, {"document": "Правила внутреннего распорядка", "paragraph": "2.3"}]`
+  - `[{"document": "Положение о материальной помощи", "paragraph": "0"}]`
+  - `[{"document": "Программа поддержки сотрудников", "paragraph": "4.5"}]`
+- Do not invent or alter document names; use only the names provided in the context.
+
+A lot depends on this answer—triple-check it!
+"""
+
+changes_user_template = """
+{% if user_name %}
+User Name: {{ user_name }}
+{% endif %}
+{% if user_info %}
+Additional User Info:
+{{ user_info }}
+{% endif %}
+
+Changes in User Information:
+{% for key, value in changes.items() %}
+- {{ key }}: {{ value }}
+{% endfor %}
+
+<context>
+{% for document in documents %}
+Document: {{ document.meta['file_path'] }}
+Content:
+{{ document.content }}
+{% endfor %}
+</context>
+
+Inform the user about the new opportunities or benefits available to them based on their changes.
+"""
+
+changes_system_message = ChatMessage.from_system(changes_system_prompt)
+changes_user_message = ChatMessage.from_user(changes_user_template)
+changes_messages = [changes_system_message, changes_user_message]
+
+chat_prompt_builder = ChatPromptBuilder(variables=["documents", "question", "user_name", "user_info", "changes"])
 
 from haystack import Pipeline
 
