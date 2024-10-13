@@ -85,6 +85,7 @@ async def ask(request: Question) -> Answer:
 def to_user_info(prof):
     return (
         f'Возраст:{prof.age}'
+        f'\nОрганизация:{prof.organization}'
         f'\nДолжность:{prof.position}'
         f'\nРегион: {prof.region}'
         f'\nСтаж работы: {prof.work_years}'
@@ -94,7 +95,7 @@ def to_user_info(prof):
 
 def to_answer_text(answer_response) -> str:
     answer = answer_response.answer
-    if not answer_response.references:
+    if answer_response.references:
         refs = "\n".join(f"{item.document}: {item.paragraph}" for item in answer_response.references)
         answer = f'{answer}\n\nИсточники:\n{refs}'
     return answer
@@ -110,6 +111,15 @@ async def dislike(answer_id: str) -> None:
     await set_feedback(answer_id, -1)
 
 
+FAQ_FILE_PATH = os.getenv('FAQ_FILE_PATH')
+
+
+def load_faq_from_yaml():
+    with open(FAQ_FILE_PATH, 'r', encoding='utf-8') as file:
+        faq_data = yaml.safe_load(file)
+    return faq_data["faq"]
+
+
 # Определение структуры данных
 class FAQItem(BaseModel):
     question: str
@@ -121,27 +131,10 @@ class FAQSection(BaseModel):
     questions: list[FAQItem]
 
 
-FAQ_FILE_PATH = os.getenv('FAQ_FILE_PATH')
-
-
-def load_faq_from_yaml():
-    with open(FAQ_FILE_PATH, 'r', encoding='utf-8') as file:
-        faq_data = yaml.safe_load(file)
-    return faq_data["faq"]
-
-
-@app.get("/api/faq", response_model=list[FAQSection])
-async def get_faq():
+@app.get("/api/faq", response_model=List[FAQSection])
+async def get_faq() -> List[FAQSection]:
     faq = load_faq_from_yaml()
-
-    # Формируем строку из всех секций и вопросов
-    result = ""
-    for section in faq:
-        result += f"{section['section']}\n"
-        for question in section['questions']:
-            result += f"{question['question']}\n{question['answer']}\n\n"
-
-    return {"faq": result}
+    return faq
 
 
 # Вспомогательный функционал для демонстрации
