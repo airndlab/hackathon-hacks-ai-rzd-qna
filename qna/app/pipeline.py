@@ -100,9 +100,9 @@ with open(PROMPT_FILE_PATH, 'r', encoding='utf-8') as file:
 @component
 class QueryExpander:
     def __init__(self):
-        self.system_prompt = prompts.query_expander_system_prompt
+        self.system_prompt = prompts['query_expander_system_prompt']
 
-        self.user_prompt_template = prompts.query_expander_user_prompt_template
+        self.user_prompt_template = prompts['query_expander_user_prompt_template']
 
         builder = ChatPromptBuilder(variables=["query", "user_info"])
         llm = OpenAIChatGenerator(
@@ -223,16 +223,16 @@ generator = OpenAIChatGenerator(
         "temperature": 0.3},
     timeout=600)
 
-chat_system_prompt = prompts.chat_system_prompt
+chat_system_prompt = prompts['chat_system_prompt']
 
-chat_user_template = prompts.chat_user_template
+chat_user_template = prompts['chat_user_template']
 chat_system_message = ChatMessage.from_system(chat_system_prompt)
 chat_user_message = ChatMessage.from_user(chat_user_template)
 chat_messages = [chat_system_message, chat_user_message]
 
-changes_system_prompt = prompts.changes_system_prompt
+changes_system_prompt = prompts['changes_system_prompt']
 
-changes_user_template = prompts.changes_user_template
+changes_user_template = prompts['changes_user_template']
 
 changes_system_message = ChatMessage.from_system(changes_system_prompt)
 changes_user_message = ChatMessage.from_user(changes_user_template)
@@ -942,9 +942,9 @@ rzd_dict = """
 @component
 class DictTranslator:
     def __init__(self):
-        self.system_prompt = prompts.dict_translator_system_prompt
+        self.system_prompt = prompts['dict_translator_system_prompt']
 
-        self.user_prompt_template = prompts.dict_translator_user_prompt_template
+        self.user_prompt_template = prompts['dict_translator_user_prompt_template']
 
         builder = ChatPromptBuilder(variables=["query", "context"])
         llm = OpenAIChatGenerator(
