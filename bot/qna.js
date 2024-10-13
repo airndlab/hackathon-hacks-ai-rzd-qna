@@ -103,10 +103,10 @@ async function getFaq() {
     if (response.status === 200) {
       return response.data;
     } else {
-      throw new Error(`Ошибка получения информации: ${response.status} ${response.statusText}`);
+      throw new Error(`Ошибка получения часто задаваемых вопросов: ${response.status} ${response.statusText}`);
     }
   } catch (error) {
-    throw new Error(`Ошибка получения информации: ${error.message}`);
+    throw new Error(`Ошибка получения часто задаваемых вопросов: ${error.message}`);
   }
 }
 

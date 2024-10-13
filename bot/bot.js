@@ -4,7 +4,7 @@ const { message } = require('telegraf/filters');
 const fs = require('fs'); // Модуль для работы с файловой системой
 const yaml = require('js-yaml'); // Библиотека для работы с YAML
 const { createLogger, format, transports } = require('winston');
-const { botToken, messagesPath } = require('./config');
+const { botToken, messagesPath, faqPath, quideUrl } = require('./config');
 const { getAnswer, likeAnswer, dislikeAnswer, getProfiles, postChats, getInfo, getFaq, updateProfile } = require('./qna');
 
 // Вставьте сюда ваш токен
@@ -21,7 +21,8 @@ const logger = createLogger({
 });
 
 // Загружаем сообщения
-const botMessages = loadMessages();
+const botMessages = loadMessages(messagesPath);
+const faqMessages = loadMessages(faqPath);
 
 // Обработчик команды /start
 bot.start(async (ctx) => {
@@ -29,7 +30,8 @@ bot.start(async (ctx) => {
     const profiles = await getProfiles();
     await postChats(ctx.chat.id.toString(), ctx.from.username);
     const markup = createProfilesMarkup(profiles);
-    ctx.reply(botMessages.start, { ...markup, parse_mode: 'Markdown' });
+    const { details_md } = await getInfo(ctx.chat.id.toString());
+    ctx.reply(`${botMessages.start}\n\n*Сейчас выбран:\n\n*${details_md}`, { ...markup, parse_mode: 'Markdown' });
   } catch (error) {
     ctx.reply(botMessages.error);
     logger.error('Ошибка при старте бота:', error);
@@ -48,13 +50,23 @@ bot.command('info', async (ctx) => {
   }
 });
 
+bot.command('guide', (ctx) => {
+  ctx.reply(quideUrl);
+});
+
 bot.command('faq', async (ctx) => {
   try {
-    const { faq } = await getFaq();
-    ctx.reply(faq, { parse_mode: 'Markdown' });
+    const faq = await getFaq();
+    const markup = createFaqMarkup(faq);
+    ctx.reply('Выберите секцию', { ...markup, parse_mode: 'Markdown' });
   } catch (error) {
-    ctx.reply(botMessages.error);
-    logger.error('Ошибка при получении информации:', error);
+    if (faqMessages.faq) {
+      const markup = createFaqMarkup(faqMessages.faq);
+      ctx.reply('Выберите секцию', { ...markup, parse_mode: 'Markdown' });
+    } else {
+      ctx.reply(botMessages.error);
+    }
+    logger.error('Ошибка при получении часто задаваемых вопросов:', error);
   }
 });
 
@@ -104,6 +116,28 @@ bot.action('change_profile', async (ctx) => {
   }
 });
 
+bot.action(/^section:(.+)$/, async (ctx) => {
+  const callbackData = ctx.callbackQuery.data;
+  const [, sectionIdx] = callbackData.split(':'); // Разделяем данные
+
+  try {
+    const faq = await getFaq();
+    const { section, questions } = faq[sectionIdx];
+    await ctx.answerCbQuery();
+    ctx.reply(
+        parseToMarkdownQuestions(section, questions),
+        { parse_mode: 'Markdown' },
+    );
+  } catch (error) {
+    const { section, questions } = faqMessages.faq[sectionIdx];
+    await ctx.answerCbQuery();
+    ctx.reply(
+        parseToMarkdownQuestions(section, questions),
+        { parse_mode: 'Markdown' },
+    );
+  }
+});
+
 // Обработчик для лайка
 bot.action(/^like:(.+)$/, async (ctx) => {
   const answerId = ctx.match[1];
@@ -136,16 +170,35 @@ function createProfilesMarkup(profiles) {
   ]));
 }
 
+function createFaqMarkup(sections) {
+  return Markup.inlineKeyboard(sections.map(({ section }, idx) => [
+    Markup.button.callback(section, `section:${idx}`)
+  ]));
+}
+
 function createInfoMarkup() {
   return Markup.inlineKeyboard([
     Markup.button.callback('Сменить профиль', 'change_profile'),
   ]);
 }
 
+// Функция для преобразования в Markdown
+function parseToMarkdownQuestions(section, questions) {
+  let markdownText = '';
+  markdownText += `*${section}*\n\n`;
+
+  questions.forEach(q => {
+      markdownText += `${q.question}\n`;
+      markdownText += `${q.answer}\n\n`;
+  });
+
+  return markdownText;
+}
+
 // Функция для загрузки сообщений из YAML файла
-function loadMessages() {
+function loadMessages(path) {
   try {
-    const fileContents = fs.readFileSync(messagesPath, 'utf8'); // Читаем содержимое файла
+    const fileContents = fs.readFileSync(path, 'utf8'); // Читаем содержимое файла
     const messages = yaml.load(fileContents); // Загружаем YAML в объект
     return messages; // Возвращаем объект с сообщениями
   } catch (e) {
