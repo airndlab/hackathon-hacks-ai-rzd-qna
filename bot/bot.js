@@ -54,6 +54,11 @@ bot.command('guide', (ctx) => {
   ctx.reply(quideUrl);
 });
 
+bot.command('help', (ctx) => {
+  ctx.reply('Я постоянно учусь и могу не знать всю требуемую Вам информацию.\n' +
+      'Но Вы всегда можете обратиться за помощью к сотрудникам отдела кадров Вашей организации.');
+});
+
 bot.command('faq', async (ctx) => {
   try {
     const faq = await getFaq();
