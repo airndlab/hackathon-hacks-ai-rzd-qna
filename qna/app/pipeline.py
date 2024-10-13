@@ -4,7 +4,7 @@ from haystack.utils import ComponentDevice
 
 device = ComponentDevice.from_str("cuda:0")
 
-from haystack import Document
+from haystack import Document, Pipeline
 from haystack.components.converters import PyPDFToDocument, DOCXToDocument
 from haystack.components.converters.csv import CSVToDocument
 from haystack.components.preprocessors import DocumentSplitter, DocumentCleaner
