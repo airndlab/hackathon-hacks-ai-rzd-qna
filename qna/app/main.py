@@ -85,7 +85,6 @@ async def ask(request: Question) -> Answer:
 def to_user_info(prof):
     return (
         f'Возраст:{prof.age}'
-        f'\nОрганизация:{prof.organization}'
         f'\nДолжность:{prof.position}'
         f'\nРегион: {prof.region}'
         f'\nСтаж работы: {prof.work_years}'
@@ -96,9 +95,29 @@ def to_user_info(prof):
 def to_answer_text(answer_response) -> str:
     answer = answer_response.answer
     if answer_response.references:
-        refs = "\n".join(f"{item.document}: {item.paragraph}" for item in answer_response.references)
+        refs_dict = {}
+
+        for item in answer_response.references:
+            doc_name = os.path.splitext(os.path.basename(item.document))[0]
+            paragraph_number = item.paragraph
+
+            if paragraph_number != "0":
+                prefix = f"п.{paragraph_number}, "
+            else:
+                prefix = ""
+
+            if doc_name not in refs_dict:
+                refs_dict[doc_name] = []
+            refs_dict[doc_name].append(prefix)
+
+        refs = "\n".join(f"{doc_name} " + "".join(paragraphs)[:-2] for doc_name, paragraphs in refs_dict.items())
         answer = f'{answer}\n\nИсточники:\n{refs}'
+
+        if "Коллективный договор" in refs_dict:
+            answer += "\n\n[Ссылка на Коллективный договор](https://company.rzd.ru/ru/9353/page/105104?id=1604)"
+
     return answer
+
 
 
 @app.post("/api/answers/{answer_id}/liking")

@@ -20,7 +20,7 @@ services:
       - rzd-net
 
   qna:
-    image: airndlab/rzd-qna:2024.10.13-06-34
+    image: airndlab/rzd-qna:2024.10.13-07-30
     deploy:
       resources:
         reservations:
@@ -40,7 +40,7 @@ services:
       - DATASET_DIR_PATH=/data/dataset
       - MODEL_NAME=Qwen/Qwen2.5-14B-Instruct-GPTQ-Int4
       - MODEL_URL=http://vllm:8000/v1
-      - MODEL_CONFIG_FILE_PATH=/config/model-config.json
+      - PROMPT_FILE_PATH=/config/prompts.yaml
       - PROFILES_FILE_PATH=/config/profiles.json
       - PROFILES_DEFAULT_ID=young
       - FAQ_FILE_PATH=/config/faq.yaml
