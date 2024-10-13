@@ -40,6 +40,7 @@ services:
       - DATASET_DIR_PATH=/data/dataset
       - MODEL_NAME=Qwen/Qwen2.5-14B-Instruct-GPTQ-Int4
       - MODEL_URL=http://vllm:8000/v1
+      - PROMPT_FILE_PATH=/config/prompts.yaml
       - PROFILES_FILE_PATH=/config/profiles.json
       - PROFILES_DEFAULT_ID=young
       - FAQ_FILE_PATH=/config/faq.yaml
