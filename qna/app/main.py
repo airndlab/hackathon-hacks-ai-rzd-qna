@@ -94,7 +94,7 @@ def to_user_info(prof):
 
 def to_answer_text(answer_response) -> str:
     answer = answer_response.answer
-    if not answer_response.references:
+    if answer_response.references:
         refs = "\n".join(f"{item.document}: {item.paragraph}" for item in answer_response.references)
         answer = f'{answer}\n\nИсточники:\n{refs}'
     return answer
