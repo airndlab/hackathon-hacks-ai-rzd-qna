@@ -85,7 +85,6 @@ async def ask(request: Question) -> Answer:
 def to_user_info(prof):
     return (
         f'Возраст:{prof.age}'
-        f'\nОрганизация:{prof.organization}'
         f'\nДолжность:{prof.position}'
         f'\nРегион: {prof.region}'
         f'\nСтаж работы: {prof.work_years}'
