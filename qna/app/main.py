@@ -110,17 +110,6 @@ async def dislike(answer_id: str) -> None:
     await set_feedback(answer_id, -1)
 
 
-# Определение структуры данных
-class FAQItem(BaseModel):
-    question: str
-    answer: str
-
-
-class FAQSection(BaseModel):
-    section: str
-    questions: list[FAQItem]
-
-
 FAQ_FILE_PATH = os.getenv('FAQ_FILE_PATH')
 
 
@@ -130,7 +119,7 @@ def load_faq_from_yaml():
     return faq_data["faq"]
 
 
-@app.get("/api/faq", response_model=list[FAQSection])
+@app.get("/api/faq")
 async def get_faq():
     faq = load_faq_from_yaml()
 
