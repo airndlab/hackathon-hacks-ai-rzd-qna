@@ -96,6 +96,20 @@ async function getInfo(chatId) {
   }
 }
 
+async function getFaq() {
+  try {
+    const response = await axios.get(`${QNA_URL}/api/faq`);
+
+    if (response.status === 200) {
+      return response.data;
+    } else {
+      throw new Error(`Ошибка получения информации: ${response.status} ${response.statusText}`);
+    }
+  } catch (error) {
+    throw new Error(`Ошибка получения информации: ${error.message}`);
+  }
+}
+
 async function updateProfile(chatId, profileId) {
   try {
     const response = await axios.patch(`${QNA_URL}/api/chats/${chatId}/profiles/${profileId}`);
@@ -118,5 +132,6 @@ module.exports = {
   getProfiles,
   postChats,
   getInfo,
+  getFaq,
   updateProfile,
 };

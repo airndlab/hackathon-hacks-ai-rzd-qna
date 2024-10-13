@@ -5,7 +5,7 @@ const fs = require('fs'); // Модуль для работы с файлово�
 const yaml = require('js-yaml'); // Библиотека для работы с YAML
 const { createLogger, format, transports } = require('winston');
 const { botToken, messagesPath } = require('./config');
-const { getAnswer, likeAnswer, dislikeAnswer, getProfiles, postChats, getInfo, updateProfile } = require('./qna');
+const { getAnswer, likeAnswer, dislikeAnswer, getProfiles, postChats, getInfo, getFaq, updateProfile } = require('./qna');
 
 // Вставьте сюда ваш токен
 const bot = new Telegraf(botToken);
@@ -42,6 +42,16 @@ bot.command('info', async (ctx) => {
 
     const markup = createInfoMarkup();
     ctx.reply(details_md, { ...markup, parse_mode: 'Markdown' });
+  } catch (error) {
+    ctx.reply(botMessages.error);
+    logger.error('Ошибка при получении информации:', error);
+  }
+});
+
+bot.command('faq', async (ctx) => {
+  try {
+    const { faq } = await getFaq();
+    ctx.reply(faq, { parse_mode: 'Markdown' });
   } catch (error) {
     ctx.reply(botMessages.error);
     logger.error('Ошибка при получении информации:', error);
