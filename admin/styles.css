@@ -1,0 +1,34 @@
+body {
+    font-family: 'Roboto', sans-serif;
+    background-color: #f9f9f9;
+    margin: 0;
+    padding: 20px;
+    height: 100vh; /* Высота для iframe */
+}
+
+.mascot {
+    font-size: 100px;
+}
+
+.metabase-container {
+    margin-top: 20px;
+    position: relative;
+    height: calc(100vh - 300px); /* Высота iframe с учетом других элементов */
+}
+
+iframe {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}
+
+/* Настройка цвета кнопок */
+.btn {
+    background-color: #e21a1a; /* Цвет кнопок */
+}
+
+.btn:hover {
+    background-color: #c71515; /* Цвет при наведении */
+}
