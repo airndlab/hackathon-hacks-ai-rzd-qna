@@ -15,4 +15,4 @@ async def send_message(chat_id, message):
             if response.status == 200:
                 logger.info(f'Sent bot message: chat_id="{chat_id}" message="{message}"')
             else:
-                logger.info(f'Error bot message: chat_id="{chat_id}" message="{message}"')
+                raise Exception(f"Ошибка отправки сообщения через бот: {response.status} {await response.text()}")

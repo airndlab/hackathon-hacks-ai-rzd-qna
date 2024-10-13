@@ -172,7 +172,6 @@ async def chat(chat_id: str) -> Chat:
 async def patch_chat(chat_id: str, profile: str) -> None:
     prof = await get_profile(profile)
     await set_profile(chat_id, prof)
-    await send_message(chat_id, f'Обновили данные тебе - радуйся!\n\n{profile}')
 
 
 class PutChatProfile(BaseModel):
@@ -226,6 +225,7 @@ async def put_chat(chat_id: str, request: PutChatProfile) -> None:
     if request.details_md is not None:
         prof.details_md = request.details_md
     await set_profile(chat_id, prof)
+    await send_message(chat_id, f'Обновили данные тебе - радуйся!\n\n{prof}')
 
 
 @app.post("/api/indexing")
