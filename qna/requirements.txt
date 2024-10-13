@@ -3,6 +3,7 @@ uvicorn
 aiosqlite
 aiohttp
 pyyaml
+python-docx
 watchdog
 haystack-ai
 markdown-it-py
