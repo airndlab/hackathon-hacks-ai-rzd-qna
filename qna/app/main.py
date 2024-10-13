@@ -26,7 +26,7 @@ from pydantic import BaseModel
 from app.bot import send_message
 from app.db import init_db, save_answer, set_feedback, save_chat, get_chat, set_profile, Chat, Profile
 from app.indexing import run_indexing_manually, start_observer
-from app.pipeline5 import get_chat_response
+from app.pipeline import get_chat_response, get_translation, get_benefits_response
 from app.profiles import get_profiles, get_profile, get_default_profile
 
 logging.basicConfig(
@@ -61,20 +61,16 @@ async def ask(request: Question) -> Answer:
     question = request.question
     curr_chat = await get_chat(chat_id)
     prof = curr_chat.as_profile()
-    answer_response = await get_chat_response(
-        question=question,
-        user_name=curr_chat.person_name,
-        user_info=f'Возраст:{curr_chat.age}'
-                  f'\nДолжность:{curr_chat.position}'
-                  f'\nРегион: {curr_chat.region}'
-                  f'\nСтаж работы: {curr_chat.work_years}'
-                  f'\nКоличество детей:{curr_chat.child_count}',
-        user_org=curr_chat.organization
-    )
-    answer = answer_response.answer
-    if not answer_response.references:
-        refs = "\n".join(f"{item.document}: {item.paragraph}" for item in answer_response.references)
-        answer = f'{answer}\n\nИсточники:\n{refs}'
+    if question.lower().startswith('переведи:') or question.lower().startswith('расшифруй:'):
+        answer = get_translation(question.split(':', 1)[1].strip())
+    else:
+        answer_response = get_chat_response(
+            question=question,
+            user_name=curr_chat.person_name,
+            user_info=to_user_info(prof),
+            user_org=curr_chat.organization
+        )
+        answer = to_answer_text(answer_response)
     answer_id = str(uuid.uuid4())
     await save_answer(
         answer_id=answer_id,
@@ -84,6 +80,24 @@ async def ask(request: Question) -> Answer:
         profile=prof
     )
     return Answer(id=answer_id, answer=answer)
+
+
+def to_user_info(prof):
+    return (
+        f'Возраст:{prof.age}'
+        f'\nДолжность:{prof.position}'
+        f'\nРегион: {prof.region}'
+        f'\nСтаж работы: {prof.work_years}'
+        f'\nКоличество детей:{prof.child_count}'
+    )
+
+
+def to_answer_text(answer_response) -> str:
+    answer = answer_response.answer
+    if not answer_response.references:
+        refs = "\n".join(f"{item.document}: {item.paragraph}" for item in answer_response.references)
+        answer = f'{answer}\n\nИсточники:\n{refs}'
+    return answer
 
 
 @app.post("/api/answers/{answer_id}/liking")
@@ -196,36 +210,63 @@ class PutChatProfile(BaseModel):
 async def put_chat(chat_id: str, request: PutChatProfile) -> None:
     curr_chat = await get_chat(chat_id)
     prof = curr_chat.as_profile()
+    changes_dict = {}
     if request.profile is not None:
         prof.id = request.profile
     if request.title is not None:
         prof.title = request.title
+        changes_dict['title'] = prof.title
     if request.description is not None:
         prof.description = request.description
+        changes_dict['description'] = prof.description
     if request.person_name is not None:
         prof.person_name = request.person_name
+        changes_dict['person_name'] = prof.person_name
     if request.position is not None:
         prof.position = request.position
+        changes_dict['position'] = prof.position
     if request.organization is not None:
         prof.organization = request.organization
+        changes_dict['organization'] = prof.organization
     if request.region is not None:
         prof.region = request.region
+        changes_dict['region'] = prof.region
     if request.sex is not None:
         prof.sex = request.sex
+        changes_dict['sex'] = prof.sex
     if request.age is not None:
         prof.age = request.age
+        changes_dict['age'] = prof.age
     if request.child_count is not None:
         prof.child_count = request.child_count
+        changes_dict['child_count'] = prof.child_count
     if request.work_years is not None:
         prof.work_years = request.work_years
+        changes_dict['work_years'] = prof.work_years
     if request.veteran_of_labor is not None:
         prof.veteran_of_labor = request.veteran_of_labor
+        changes_dict['veteran_of_labor'] = prof.veteran_of_labor
     if request.llm_request is not None:
         prof.llm_request = request.llm_request
     if request.details_md is not None:
         prof.details_md = request.details_md
     await set_profile(chat_id, prof)
-    await send_message(chat_id, f'Обновили данные тебе - радуйся!\n\n{prof}')
+    answer_response = get_benefits_response(
+        changes_dict=changes_dict,
+        user_name=prof.person_name,
+        user_info=to_user_info(prof),
+        user_org=prof.organization
+    )
+    answer = to_answer_text(answer_response)
+    answer_id = str(uuid.uuid4())
+    await save_answer(
+        answer_id=answer_id,
+        chat_id=chat_id,
+        question='',
+        answer=answer,
+        profile=prof
+    )
+    await send_message(chat_id, answer)
 
 
 @app.post("/api/indexing")
