@@ -69,7 +69,7 @@ def index_store(main_docs_dir: str = DATASET_DIR_PATH):
 
     for org_dir in orgs_dirs.iterdir():
         if org_dir.is_dir():
-            source_docs = list(org_dir.glob("**/*"))
+            source_docs = list(org_dir.glob("*/*"))
 
             preprocessing_pipeline.run({
                 "file_type_router": {"sources": source_docs},
@@ -100,104 +100,104 @@ class QueryExpander:
 
           Your task is to process a given user query and generate a list of queries that are similar in meaning and suitable for searching in the database.
 
-          **Input:**
+          *Input:*
 
           - The user's query.
           - Additional information about the user (age, gender, number of children, veteran status, years of experience, etc.).
 
-          **Instructions:**
+          *Instructions:*
 
-          1. **If the user's query is about themselves** (contains words like "мне", "обо мне", "у меня", etc.):
+          1. *If the user's query is about themselves* (contains words like "мне", "обо мне", "у меня", etc.):
             - Rephrase the query and generate a list of queries that include the user's additional information.
             - Incorporate relevant user details into the expanded queries to make them more specific.
 
-          2. **If the user's query is not about themselves**:
-            - **a.** If the query is noisy or inconvenient for searching, rephrase it to make it clearer and more suitable for search.
-            - **b.** If the query is fully correct and suitable for searching, return it unchanged.
+          2. *If the user's query is not about themselves*:
+            - *a.* If the query is noisy or inconvenient for searching, rephrase it to make it clearer and more suitable for search.
+            - *b.* If the query is fully correct and suitable for searching, return it unchanged.
 
-          3. **If the user's query contains multiple questions or topics**:
+          3. *If the user's query contains multiple questions or topics*:
             - Decompose it into separate queries.
 
-          4. **Do not make up any information** that is not present in the user's query or additional information.
+          4. *Do not make up any information* that is not present in the user's query or additional information.
 
-          5. **Ensure that the generated queries match the meaning of the original query**.
+          5. *Ensure that the generated queries match the meaning of the original query*.
 
-          6. **The answer must be in the form of a list of strings in the format ["str1", "str2"]**.
+          6. *The answer must be in the form of a list of strings in the format ["str1", "str2"]*.
 
-          7. **Generate the answer exclusively in Russian**.
+          7. *Generate the answer exclusively in Russian*.
 
           ---
 
-          **Structure:**
+          *Structure:*
 
           Follow the structure shown below in the examples to generate the expanded queries.
 
           ### Пример 1:
-          **Пользовательский запрос:**
+          *Пользовательский запрос:*
           "Какие льготы мне положены?"
 
-          **Дополнительная информация о пользователе:**
+          *Дополнительная информация о пользователе:*
           - Стаж работы: 15 лет
           - Количество детей: 2
 
-          **Расширенные запросы:**
+          *Расширенные запросы:*
           ["Льготы для сотрудников со стажем работы 15 лет", "Положенные льготы при наличии 2 детей", "Социальные программы для работников с 15-летним стажем и двумя детьми"]
 
-          **Объяснение:** Пользователь спрашивает о себе, но не указывает конкретную информацию. Мы включаем дополнительную информацию о стаже и количестве детей в расширенные запросы.
+          *Объяснение:* Пользователь спрашивает о себе, но не указывает конкретную информацию. Мы включаем дополнительную информацию о стаже и количестве детей в расширенные запросы.
 
           ### Пример 2:
-          **Пользовательский запрос:**
+          *Пользовательский запрос:*
           "Расскажите о программах повышения квалификации"
 
-          **Дополнительная информация о пользователе:**
+          *Дополнительная информация о пользователе:*
           - Должность: Машинист
           - Стаж работы: 5 лет
 
-          **Расширенные запросы:**
+          *Расширенные запросы:*
           ["Программы повышения квалификации для машинистов", "Курсы для сотрудников со стажем работы 5 лет", "Обучение и развитие для машинистов в РЖД"]
 
-          **Объяснение:** Пользователь не спрашивает непосредственно о себе, но мы можем уточнить запрос, используя его должность и стаж.
+          *Объяснение:* Пользователь не спрашивает непосредственно о себе, но мы можем уточнить запрос, используя его должность и стаж.
 
           ### Пример 3:
-          **Пользовательский запрос:**
+          *Пользовательский запрос:*
           "Какие документы нужны для получения материальной помощи и как их оформить?"
 
-          **Дополнительная информация о пользователе:**
+          *Дополнительная информация о пользователе:*
           - Нет
 
-          **Расширенные запросы:**
+          *Расширенные запросы:*
           ["Перечень документов для получения материальной помощи", "Как оформить документы на материальную помощь"]
 
-          **Объяснение:** Вопрос содержит несколько тем. Мы декомпозируем его на отдельные запросы без добавления дополнительной информации.
+          *Объяснение:* Вопрос содержит несколько тем. Мы декомпозируем его на отдельные запросы без добавления дополнительной информации.
 
           ### Пример 4:
-          **Пользовательский запрос:**
+          *Пользовательский запрос:*
           "Правила охраны труда в компании"
 
-          **Дополнительная информация о пользователе:**
+          *Дополнительная информация о пользователе:*
           - Нет
 
-          **Расширенные запросы:**
+          *Расширенные запросы:*
           ["Правила охраны труда в компании", "Нормативы безопасности на рабочем месте"]
 
-          **Объяснение:** Вопрос ясен и не требует изменений или дополнительной информации. Мы возвращаем его без изменений и добавляем синонимичный запрос.
+          *Объяснение:* Вопрос ясен и не требует изменений или дополнительной информации. Мы возвращаем его без изменений и добавляем синонимичный запрос.
 
           ### Пример 5:
-          **Пользовательский запрос:**
+          *Пользовательский запрос:*
           "У меня появился статус ветерана труда, что мне теперь положено?"
 
-          **Дополнительная информация о пользователе:**
+          *Дополнительная информация о пользователе:*
           - Статус ветерана труда: Да
           - Регион: Север
 
-          **Расширенные запросы:**
+          *Расширенные запросы:*
           ["Льготы для ветеранов труда в РЖД", "Положенные компенсации сотрудникам со статусом ветерана труда на Севере", "Льготы для работников на севере","Привилегии для работников-ветеранов труда"]
 
-          **Объяснение:** Пользователь сообщает об изменении статуса. Мы используем эту информацию для формирования расширенных запросов.
+          *Объяснение:* Пользователь сообщает об изменении статуса. Мы используем эту информацию для формирования расширенных запросов.
 
           ---
 
-          **A lot depends on this answer—triple-check it!**
+          *A lot depends on this answer—triple-check it!*
 
           """
 
@@ -338,10 +338,10 @@ You are a high-class support chatbot for "РЖД" (RZD), a Russian railway compa
 
 Your task is to provide accurate answers related to RZD, based on the provided context.
 
-**Rules to follow**:
-- Address the user respectfully, using "вы", and by their name if provided.
+*Rules to follow*:
+- Address the user respectfully, using "Вы", and by their name if provided.
 - If the user asks about themselves, consider the additional user information provided.
-- Say **exactly** "Я не знаю ответа на ваш вопрос" if:
+- Say *exactly* "Я не знаю ответа на ваш вопрос" if:
    1. The input is not a question.
    2. The answer is not in the provided context.
    3. The question is unrelated to RZD.
@@ -350,9 +350,9 @@ Your task is to provide accurate answers related to RZD, based on the provided c
 - Where applicable, for ease of reading, format the answer using line breaks and bulleted lists.
 - Limit your answer to 10-12 sentences
 
-**Additional Instructions**:
+*Additional Instructions*:
 - After providing the answer, include a JSON object that lists the document names and paragraph numbers (if specified at the beginning of the content) that were used to generate the answer.
-- **Do not include** the JSON object if your answer is exactly "Я не знаю ответа на ваш вопрос."
+- *Do not include* the JSON object if your answer is exactly "Я не знаю ответа на ваш вопрос."
 - The format should be:
   `[{"document": <Document Name>, "paragraph": <Paragraph Number>}, {"document": <Document Name>, "paragraph": <Paragraph Number>}]`
 - `<Document Name>` is exactly what is taken from `document.meta['file_path']`).
@@ -397,8 +397,8 @@ You are a high-class support chatbot for "РЖД" (RZD), a Russian railway compa
 
 Your task is to inform the user about opportunities, benefits, incentives, material assistance, and compensations that are available to them, based on the provided context and considering any changes in their personal information.
 
-**Rules to follow**:
-- Address the user respectfully, using "вы", and by their name if provided.
+*Rules to follow*:
+- Address the user respectfully, using "Вы", and by their name if provided.
 - Consider the additional user information provided, especially changes in their personal data.
 - Provide detailed information about new opportunities or benefits that are now available to the user due to the changes in their information.
 - Do not include any information that is not in the provided context.
@@ -406,9 +406,9 @@ Your task is to inform the user about opportunities, benefits, incentives, mater
 - Where applicable, for ease of reading, format the answer using line breaks and bulleted lists.
 - Limit your answer to 10-12 sentences
 
-**Additional Instructions**:
+*Additional Instructions*:
 - After providing the information, include a JSON object that lists the document names and paragraph numbers (if specified at the beginning of the content) that were used to generate the information.
-- **Do not include** the JSON object if there are no relevant opportunities or benefits to inform the user about.
+- *Do not include* the JSON object if there are no relevant opportunities or benefits to inform the user about.
 - The format should be:
   `[{"document": <Document Name>, "paragraph": <Paragraph Number>}, {"document": <Document Name>, "paragraph": <Paragraph Number>}]`
 - `<Document Name>` is exactly what is taken from `document.meta['file_path']`.
@@ -536,7 +536,7 @@ def get_chat_response(question: str, user_name: str = "", user_info: str = "", u
 
                 try:
                     references_list = json.loads(json_str_corrected)
-                    references = [Reference(**item) for item in references_list]
+                    references = [Reference(*item) for item in references_list]
                     response_text = response_text[:first_bracket_idx].strip()
                 except json.JSONDecodeError as e:
                     print(f"Ошибка при парсинге JSON: {e}")
@@ -679,7 +679,7 @@ def get_benefits_response(
 
                 try:
                     references_list = json.loads(json_str_corrected)
-                    references = [Reference(**item) for item in references_list]
+                    references = [Reference(*item) for item in references_list]
                     # Удаляем JSON-объект из ответа
                     response_text = response_text[:first_bracket_idx].strip()
                 except json.JSONDecodeError as e:
@@ -1160,40 +1160,40 @@ class DictTranslator:
         self.system_prompt = """
           You are an assistant that expands abbreviations in sentences.
 
-          **Instructions:**
+          *Instructions:*
           - When given a sentence containing abbreviations, you should return the sentence with all abbreviations expanded.
-          - **Use only** the abbreviations and their expansions provided within the `<context>` tags.
-          - **Do not invent** or use any abbreviations not present in the provided context.
-          - The output must be in **Russian**.
+          - *Use only* the abbreviations and their expansions provided within the `<context>` tags.
+          - *Do not invent* or use any abbreviations not present in the provided context.
+          - The output must be in *Russian*.
           - Do not provide explanations or additional information—only the expanded sentence.
 
-          **Dictionary of Abbreviations:**
+          *Dictionary of Abbreviations:*
           <context>
           {{context}}
           </context>
 
 
           <examples>
-          1. **Input:** "ДСП и ДНЦ встретились на ПЧ, чтобы обсудить ПМС."
-            **Output:** "Дежурный по станции и поездной диспетчер встретились на дистанции пути, чтобы обсудить путевую машинную станцию."
+          1. *Input:* "ДСП и ДНЦ встретились на ПЧ, чтобы обсудить ПМС."
+            *Output:* "Дежурный по станции и поездной диспетчер встретились на дистанции пути, чтобы обсудить путевую машинную станцию."
 
-          2. **Input:** "НГЧ забыл АБ на АЛСН и срочно побежал в ТЧ."
-            **Output:** "Начальник дистанции гражданских сооружений забыл автоблокировку на автоматической локомотивной сигнализации и срочно побежал в локомотивное депо."
+          2. *Input:* "НГЧ забыл АБ на АЛСН и срочно побежал в ТЧ."
+            *Output:* "Начальник дистанции гражданских сооружений забыл автоблокировку на автоматической локомотивной сигнализации и срочно побежал в локомотивное депо."
 
-          3. **Input:** "ТЧМП опоздал на ПТОЛ, и НГ отправил его на АРМ ТВК."
-            **Output:** "Помощник машиниста опоздал на пункт технического обслуживания локомотивов, и начальник дороги отправил его за автоматизированное рабочее место товарного кассира."
+          3. *Input:* "ТЧМП опоздал на ПТОЛ, и НГ отправил его на АРМ ТВК."
+            *Output:* "Помощник машиниста опоздал на пункт технического обслуживания локомотивов, и начальник дороги отправил его за автоматизированное рабочее место товарного кассира."
 
-          4. **Input:** "ПЧЗ забыл КПД в АСУ КП, и теперь его ищет ДСПП."
-            **Output:** "Заместитель начальника дистанции пути забыл контроль параметров движения в автоматизированной системе управления контейнерным пунктом, и теперь его ищет дежурный по парку."
+          4. *Input:* "ПЧЗ забыл КПД в АСУ КП, и теперь его ищет ДСПП."
+            *Output:* "Заместитель начальника дистанции пути забыл контроль параметров движения в автоматизированной системе управления контейнерным пунктом, и теперь его ищет дежурный по парку."
 
-          5. **Input:** "РБЧС вызвал СЦБ, чтобы проверить, как работает ЭЧ на ПЧ."
-            **Output:** "Ревизор по чрезвычайным ситуациям вызвал сигнализацию, централизацию и блокировку, чтобы проверить, как работает дистанция электроснабжения на дистанции пути."
+          5. *Input:* "РБЧС вызвал СЦБ, чтобы проверить, как работает ЭЧ на ПЧ."
+            *Output:* "Ревизор по чрезвычайным ситуациям вызвал сигнализацию, централизацию и блокировку, чтобы проверить, как работает дистанция электроснабжения на дистанции пути."
           </examples>
           """
 
         self.user_prompt_template = """
-                                **Input:** "{{query}}"
-                                **Output:**
+                                *Input:* "{{query}}"
+                                *Output:*
                                 """
 
         builder = ChatPromptBuilder(variables=["query", "context"])
