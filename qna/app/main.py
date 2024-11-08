@@ -14,7 +14,6 @@
 import logging
 import os
 import sys
-import threading
 import uuid
 from typing import List, Optional
 
@@ -25,7 +24,7 @@ from pydantic import BaseModel
 
 from app.bot import send_message
 from app.db import init_db, save_answer, set_feedback, save_chat, get_chat, set_profile, Chat, Profile
-from app.indexing import run_indexing_manually, start_observer
+from app.indexing import run_indexing_manually
 from app.pipeline import get_chat_response, get_translation, get_benefits_response
 from app.profiles import get_profiles, get_profile, get_default_profile
 
@@ -117,7 +116,6 @@ def to_answer_text(answer_response) -> str:
             answer += "\n\n[Ссылка на Коллективный договор](https://company.rzd.ru/ru/9353/page/105104?id=1604)"
 
     return answer
-
 
 
 @app.post("/api/answers/{answer_id}/liking")
@@ -290,8 +288,6 @@ async def indexing():
 @app.on_event("startup")
 async def startup_event():
     await init_db()
-    thread = threading.Thread(target=start_observer, daemon=True)
-    thread.start()
 
 
 if __name__ == "__main__":

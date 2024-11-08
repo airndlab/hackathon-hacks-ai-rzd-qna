@@ -19,7 +19,7 @@ async def run_indexing(indexing_id: str):
         await index_store()
         await set_indexing(indexing_id, 'finished')
     except Exception as exc:
-        logger.error(exc)
+        logger.error(f'Indexing failed for indexing_id="{indexing_id}": {exc}')
         await set_indexing(indexing_id, 'failed')
 
 
