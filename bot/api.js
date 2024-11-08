@@ -14,8 +14,8 @@ module.exports = (bot, logger) => {
     }
 
     try {
-      await bot.telegram.sendMessage(chatId, message);
-      res.status(200).json({ success: true, message: 'Сообщение успешно отправлено.' });
+      await bot.telegram.sendMessage(chatId, message, { parseMode: 'Markdown' });
+      res.status(200).json({ success: true, message: 'Сообщение успешно отправлено.' })
     } catch (error) {
       logger.error('Ошибка при отправке сообщения:', error);
       res.status(500).json({ error: 'Ошибка при отправке сообщения.' });

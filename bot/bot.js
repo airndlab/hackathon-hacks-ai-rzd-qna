@@ -82,7 +82,7 @@ bot.on(message('text'), async (ctx) => {
     const answerData = await getAnswer(question, ctx.chat.id.toString());
     const text = createAnswerText(answerData);
     const markup = createAnswerMarkup(answerData.id);
-    await ctx.reply(text, markup);
+    await ctx.reply(text, { ...markup, parse_mode: 'Markdown' });
   } catch (error) {
     ctx.reply(botMessages.error);
     logger.error('Ошибка при обработке вопроса:', error);
