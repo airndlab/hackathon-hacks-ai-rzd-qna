@@ -1,0 +1,17 @@
+model: qilowoq/Vikhr-Nemo-12B-Instruct-R-21-09-24-4Bit-GPTQ
+embedding_model: deepvk/USER-bge-m3
+
+split_function:
+  max_chunk_size: 300
+  overlap: 0
+
+rag_gen_kwargs:
+  max_tokens: 2048
+  top_p: 0.8
+  temperature: 0.3
+
+json_gen_kwargs:
+  max_tokens: 512
+  top_p: 0.9
+  temperature: 0.3
+  frequency_penalty: 1.2
