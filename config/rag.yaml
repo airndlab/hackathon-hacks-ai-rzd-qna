@@ -1,5 +1,5 @@
-model: qilowoq/Vikhr-Nemo-12B-Instruct-R-21-09-24-4Bit-GPTQ
-embedding_model: deepvk/USER-bge-m3
+model: Qwen/Qwen2.5-14B-Instruct-GPTQ-Int4
+embedding_model: intfloat/multilingual-e5-large-instruct
 
 split_function:
   max_chunk_size: 300
