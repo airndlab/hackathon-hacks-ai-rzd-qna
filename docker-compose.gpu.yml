@@ -1,0 +1,54 @@
+name: rzd
+
+services:
+  vllm:
+    image: vllm/vllm-openai:v0.6.2
+    ipc: host
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              device_ids: [ '0' ]
+              capabilities: [ gpu ]
+    environment:
+      - HUGGING_FACE_HUB_TOKEN=${HUGGING_FACE_HUB_TOKEN}
+    volumes:
+      - ~/.cache/huggingface:/root/.cache/huggingface
+    command: --model qilowoq/Vikhr-Nemo-12B-Instruct-R-21-09-24-4Bit-GPTQ --quantization gptq --device cuda
+    networks:
+      - rzd-net
+
+  qna:
+    image: airndlab/rzd-qna:2024.10.13-07-52
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              device_ids: [ '0' ]
+              capabilities: [ gpu ]
+    ports:
+      - 8082:8080
+    volumes:
+      - ~/.cache/huggingface:/root/.cache/huggingface
+      - ./config:/config
+      - ./dataset:/data/dataset
+      - ./dbs:/data/dbs
+    environment:
+      - HF_HUB_DOWNLOAD_TIMEOUT=300
+      - QNA_DB_PATH=/data/dbs/qna.db
+      - MAIN_DOCS_DIR=/data/dataset
+      - VLLM_URL=http://vllm:8000/v1
+      - PROMPTS_CONFIG_PATH=/config/prompts.yaml
+      - DICTS_CONFIG_PATH=/config/dicts.yaml
+      - RAG_CONFIG_PATH=/config/rag.yaml
+      - PROFILES_FILE_PATH=/config/profiles.json
+      - PROFILES_DEFAULT_ID=young
+      - FAQ_FILE_PATH=/config/faq.yaml
+      - BOT_API_URL=http://158.160.68.33:8092
+    networks:
+      - rzd-net
+
+networks:
+  rzd-net:
