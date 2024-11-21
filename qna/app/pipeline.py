@@ -1,5 +1,6 @@
 import gc
 import json
+import logging
 import os
 import re
 from pathlib import Path
@@ -23,6 +24,8 @@ from haystack.dataclasses import ChatMessage
 from haystack.document_stores.in_memory import InMemoryDocumentStore
 from haystack.utils import ComponentDevice, Device, Secret
 from pydantic import BaseModel
+
+logger = logging.getLogger(__name__)
 
 if torch.cuda.is_available():
     device = ComponentDevice.from_single(Device.gpu(id=0))
@@ -154,7 +157,6 @@ def custom_split_function(
     if not points:
         # Если в тексте нет пунктов, просто разбиваем текст на чанки по словам
         chunks = split_large_text(text, max_chunk_size, overlap)
-        # print("Чанки отдал (текст без пунктов)")
         return chunks
 
     # Если текст начинается без пунктов, обрабатываем этот префикс
@@ -367,7 +369,7 @@ class QueryExpander:
                 expanded_queries = json.loads(json_str)
 
             except Exception as e:
-                print(e)
+                logger.warning(e)
                 return {"queries": query}
 
         return {"queries": expanded_queries}
@@ -526,7 +528,7 @@ def get_chat_response(question: str, user_name: str = "", user_info: str = "", u
     try:
         relevant_ids = json.loads(selected_docs_response)['relevant_doc_ids']
     except Exception as e:
-        print(
+        logger.warning(
             f"Произошла ошибка при обработке вернувшихся из модели документов: {e}\nОтвет модели: {selected_docs_response}")
         return ModelResponse(answer=response_text)
 
@@ -582,7 +584,7 @@ def get_benefits_response(
     # Формируем второй вопрос для prompt_builder
     prompt_builder_question = 'Какие льготы, поощрения, материальная помощь, компенсации полагаются сотрудникам со '
     prompt_builder_question += ', '.join([f"{key}: {value}" for key, value in russian_changes_instrumental.items()])
-    print(prompt_builder_question)
+    logger.info(prompt_builder_question)
 
     # Запускаем RAG пайплайн
     global response
@@ -619,8 +621,6 @@ def get_benefits_response(
 
     response_text = response["final_answer_llm"]["replies"][0].content
 
-    print(len(response['retriever']['documents']))
-
     # Извлечение JSON-объекта по символам [ и ] с конца строки
     references = None
     try:
@@ -645,9 +645,9 @@ def get_benefits_response(
                     # Удаляем JSON-объект из ответа
                     response_text = response_text[:first_bracket_idx].strip()
                 except json.JSONDecodeError as e:
-                    print(f"Ошибка при парсинге JSON: {e}")
+                    logger.warning(f"Ошибка при парсинге JSON: {e}")
     except Exception as e:
-        print(f"Общая ошибка при обработке ответа: {e}")
+        logger.warning(f"Общая ошибка при обработке ответа: {e}")
 
     gc.collect()
     torch.cuda.empty_cache()
@@ -694,7 +694,7 @@ class DictTranslator:
         },
             include_outputs_from={"builder"})
 
-        print(result['builder'])
+        logger.info(result['builder'])
         response_text = result['llm']['replies'][0].content.strip()
 
         return ModelResponse(answer=response_text)
