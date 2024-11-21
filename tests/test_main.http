@@ -1,4 +1,7 @@
-GET http://localhost:8000/
+PUT http://176.123.163.193:8080/api/chats/162684825/profiles
 Accept: application/json
 
-###
+{
+  "child_count": 3,
+  "work_years": 25
+}
