@@ -15,12 +15,12 @@ services:
       - HUGGING_FACE_HUB_TOKEN=${HUGGING_FACE_HUB_TOKEN}
     volumes:
       - ~/.cache/huggingface:/root/.cache/huggingface
-    command: --model qilowoq/Vikhr-Nemo-12B-Instruct-R-21-09-24-4Bit-GPTQ --quantization gptq --device cuda
+    command: --model Qwen/Qwen2.5-14B-Instruct-GPTQ-Int4 --quantization gptq --device cuda
     networks:
       - rzd-net
 
   qna:
-    image: airndlab/rzd-qna:2024.11.21-10-21
+    image: airndlab/rzd-qna:2024.11.21-13-18
     deploy:
       resources:
         reservations:
