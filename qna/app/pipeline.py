@@ -269,35 +269,6 @@ def do_reindex():
 
 do_reindex()
 
-# Инициализируем словари
-idx_to_file_path = {}
-idx_to_section_number = {}
-
-# Регулярное выражение для поиска номеров пунктов вида 7.1 или 2.5.4 и т.д.
-section_number_pattern = re.compile(r'^(\d+\.)*\d+')
-
-for i, doc in enumerate(document_store.filter_documents()):
-    meta = doc.meta
-    file_path = meta.get('file_path', '')
-    meta.update({'rag_id': i})
-
-    # Сопоставляем split_id с file_path
-    idx_to_file_path[i] = file_path
-
-    content = doc.content
-    lines = content.splitlines()
-
-    section_number = ''
-
-    if lines:
-        first_line = lines[0].strip()
-        if first_line:
-            match = section_number_pattern.match(first_line)
-            if match:
-                section_number = match.group()
-
-    idx_to_section_number[i] = section_number
-
 
 def create_generator(gen_kwargs=None):
     return OpenAIChatGenerator(
@@ -370,7 +341,7 @@ class QueryExpander:
 
             except Exception as e:
                 logger.warning(e)
-                return {"queries": query}
+                return {"queries": [query]}
 
         return {"queries": expanded_queries}
 
@@ -395,7 +366,7 @@ class MultiQueryTextEmbedder:
 
 @component
 class MultiQueryInMemoryRetriever:
-    def __init__(self, retriever: InMemoryEmbeddingRetriever, filters=None, top_k: int = 1,
+    def __init__(self, retriever: InMemoryEmbeddingRetriever, filters=None, top_k: int = 2,
                  score_threshold: float = 0.3):
 
         self.retriever = retriever
@@ -411,7 +382,7 @@ class MultiQueryInMemoryRetriever:
             self.ids.add(document.id)
 
     @component.output_types(documents=List[Document])
-    def run(self, emdeddings: List[List[str]], top_k=1, filters=None):
+    def run(self, emdeddings: List[List[str]], top_k=2, filters=None):
         self.results = []
         self.ids = set()
 
@@ -426,51 +397,38 @@ class MultiQueryInMemoryRetriever:
 
 
 def create_rag_pipeline(
-        document_store,
-) -> Pipeline:
-    expander = QueryExpander(
-        system_prompt=prompt_config['query_expander_system_prompt'],
-        user_prompt_template=prompt_config['query_expander_user_prompt_template'],
-        json_gen_kwargs=json_gen_kwargs,
-    )
-    text_embedder = MultiQueryTextEmbedder(SentenceTransformersTextEmbedder(model=embedding_model, device=device))
-    retriever = MultiQueryInMemoryRetriever(InMemoryEmbeddingRetriever(document_store))
+    document_store,
+    ) -> Pipeline:
+  expander = QueryExpander(
+      system_prompt = prompt_config['query_expander_system_prompt'],
+      user_prompt_template = prompt_config['query_expander_user_prompt_template'],
+      json_gen_kwargs = json_gen_kwargs,
+  )
+  text_embedder = MultiQueryTextEmbedder(SentenceTransformersTextEmbedder(model=embedding_model, device=device))
+  retriever = MultiQueryInMemoryRetriever(InMemoryEmbeddingRetriever(document_store))
+  generator = create_generator(rag_gen_kwargs)
 
-    doc_relevant_generator = create_generator(rag_gen_kwargs)
-    final_answer_generator = create_generator(rag_gen_kwargs)
+  chat_prompt_builder = ChatPromptBuilder(variables=["documents", "question", "user_name", "user_info", "changes"])
 
-    doc_selection_prompt_builder = ChatPromptBuilder(
-        variables=["documents", "question", "user_name", "user_info", "changes"])
-    final_answer_prompt_builder = ChatPromptBuilder(
-        variables=["documents", "question", "user_name", "user_info", "changes", "relevant_docs"])
+  rag_pipeline = Pipeline()
 
-    basic_rag_pipeline = Pipeline()
+  rag_pipeline.add_component("expander", expander)
+  rag_pipeline.add_component("text_embedder", text_embedder)
+  rag_pipeline.add_component("retriever", retriever)
+  rag_pipeline.add_component("prompt_builder", chat_prompt_builder)
+  rag_pipeline.add_component("llm", generator)
 
-    basic_rag_pipeline.add_component("expander", expander)
-    basic_rag_pipeline.add_component("text_embedder", text_embedder)
-    basic_rag_pipeline.add_component("retriever", retriever)
-    basic_rag_pipeline.add_component("doc_selection_prompt_builder", doc_selection_prompt_builder)
-    basic_rag_pipeline.add_component("doc_selector_llm", doc_relevant_generator)
-    basic_rag_pipeline.add_component("final_answer_prompt_builder", final_answer_prompt_builder)
-    basic_rag_pipeline.add_component("final_answer_llm", final_answer_generator)
+  rag_pipeline.connect("expander.queries", "text_embedder.queries")
+  rag_pipeline.connect("text_embedder.embeddings", "retriever")
+  rag_pipeline.connect("retriever", "prompt_builder.documents")
+  rag_pipeline.connect("prompt_builder", "llm")
 
-    basic_rag_pipeline.connect("expander.queries", "text_embedder.queries")
-    basic_rag_pipeline.connect("text_embedder.embeddings", "retriever")
-    basic_rag_pipeline.connect("retriever", "doc_selection_prompt_builder.documents")
-    basic_rag_pipeline.connect("retriever", "final_answer_prompt_builder.documents")
-    basic_rag_pipeline.connect("doc_selection_prompt_builder", "doc_selector_llm")
-    basic_rag_pipeline.connect("doc_selector_llm.replies", "final_answer_prompt_builder.relevant_docs")
-    basic_rag_pipeline.connect("final_answer_prompt_builder", "final_answer_llm")
-
-    return basic_rag_pipeline
+  return rag_pipeline
 
 
-chat_system_message = ChatMessage.from_system(prompt_config['vikhr_chat_system_prompt'])
-chat_user_message = ChatMessage.from_user(prompt_config['vikhr_chat_user_prompt_template'])
-doc_selection_chat_messages = [chat_system_message, chat_user_message]
-
-chat_assistant_message = ChatMessage.from_assistant(prompt_config['vikhr_chat_assistant_prompt_template'])
-final_answer_chat_messages = [chat_system_message, chat_user_message, chat_assistant_message]
+chat_system_message = ChatMessage.from_system(prompt_config['chat_system_prompt'])
+chat_user_message = ChatMessage.from_user(prompt_config['chat_user_prompt_template'])
+chat_messages = [chat_system_message, chat_user_message]
 
 changes_system_message = ChatMessage.from_system(prompt_config['changes_system_prompt'])
 changes_user_message = ChatMessage.from_user(prompt_config['changes_user_prompt_template'])
@@ -491,73 +449,81 @@ class ModelResponse(BaseModel):
     references: Optional[List[Reference]] = None
 
 
-def get_chat_response(question: str, user_name: str = "", user_info: str = "", user_org: str = "") -> ModelResponse:
-    global response
+def get_chat_response(
+    question: str,
+    user_name: str="",
+    user_info: str="",
+    user_org: str = "",
+    ) -> ModelResponse:
     response = rag_pipeline.run({
-        "expander": {
-            "query": question,
-            "user_info": user_info
+    "expander": {
+        "query": question,
+        "user_info": user_info
         },
-        "doc_selection_prompt_builder": {
-            "question": question,
-            "template": doc_selection_chat_messages,
-            "user_name": user_name,
-            "user_info": user_info
-        },
+    "prompt_builder": {"question": question,
+                       "template": chat_messages,
+                       "user_name": user_name,
+                       "user_info": user_info},
+    "retriever":{
+      "filters": {
+          "operator": "OR",
+          "conditions":[
+              {"field": "meta.organization", "operator": "==", "value": "RZD"},
+              {"field": "meta.organization", "operator": "==", "value": user_org},
+          ]
+      },
+      }
+    },
+    include_outputs_from={"expander", "retriever","prompt_builder"})
 
-        "final_answer_prompt_builder": {
-            "question": question,
-            "template": final_answer_chat_messages,
-            "user_name": user_name,
-            "user_info": user_info
-        },
-        "retriever": {
-            "filters": {
-                "operator": "OR",
-                "conditions": [
-                    {"field": "meta.organization", "operator": "==", "value": "RZD"},
-                    {"field": "meta.organization", "operator": "==", "value": user_org},
-                ]
-            },
-        }
-    }, include_outputs_from={"retriever", "doc_selection_prompt_builder", "final_answer_prompt_builder",
-                             "doc_selector_llm"})
+    if len(response['retriever']['documents']) == 0:
+      return ModelResponse(
+          answer = "Я не знаю ответа на ваш вопрос.",
+          references = None
+      )
+    print(response['expander'])
+    print(len(response['retriever']['documents']))
 
-    response_text = response['final_answer_llm']['replies'][0].content
-    selected_docs_response = response["doc_selector_llm"]["replies"][0].content
+    response_text = response["llm"]["replies"][0].content
+
+    references = None
     try:
-        relevant_ids = json.loads(selected_docs_response)['relevant_doc_ids']
+        # Находим индекс последнего символа ']'
+        last_bracket_idx = response_text.rfind(']')
+        if last_bracket_idx != -1:
+            # Находим индекс соответствующего символа '[' перед ']'
+            first_bracket_idx = response_text.rfind('[', 0, last_bracket_idx)
+            if first_bracket_idx != -1:
+                json_str = response_text[first_bracket_idx:last_bracket_idx+1]
+
+                json_str_corrected = re.sub(
+                    r'"paragraph"\s*:\s*(\d+\.\d+\.\d+)',
+                    r'"paragraph": "\1"',
+                    json_str
+                )
+
+                try:
+                    references_list = json.loads(json_str_corrected)
+                    references = [Reference(**item) for item in references_list]
+                    response_text = response_text[:first_bracket_idx].strip()
+                except json.JSONDecodeError as e:
+                    print(f"Ошибка при парсинге JSON: {e}")
     except Exception as e:
-        logger.warning(
-            f"Произошла ошибка при обработке вернувшихся из модели документов: {e}\nОтвет модели: {selected_docs_response}")
-        return ModelResponse(answer=response_text)
-
-    references = []
-
-    for idx in relevant_ids:
-        doc_name = idx_to_file_path.get(idx, None)
-
-        if doc_name is None:
-            continue
-
-        doc_name = os.path.splitext(os.path.basename(doc_name))[0]
-        section_number = idx_to_section_number.get(idx, "")
-
-        if doc_name is not None:
-            references.append(Reference(document=doc_name, paragraph=section_number))
+        print(f"Общая ошибка при обработке ответа: {e}")
 
     gc.collect()
     torch.cuda.empty_cache()
+
 
     return ModelResponse(answer=response_text, references=references)
 
 
 def get_benefits_response(
-        changes_dict: dict,
-        user_name: str = '',
-        user_info: str = '',
-        user_org: str = '',
-        top_k=3
+    changes_dict: dict,
+    user_name: str = '',
+    user_info: str = '',
+    user_org: str = '',
+    top_k = 3
 ) -> ModelResponse:
     # Сопоставление английских ключей с базовыми русскими словами
     russian_changes_base = {}
@@ -584,23 +550,15 @@ def get_benefits_response(
     # Формируем второй вопрос для prompt_builder
     prompt_builder_question = 'Какие льготы, поощрения, материальная помощь, компенсации полагаются сотрудникам со '
     prompt_builder_question += ', '.join([f"{key}: {value}" for key, value in russian_changes_instrumental.items()])
-    logger.info(prompt_builder_question)
+    print(prompt_builder_question)
 
-    # Запускаем RAG пайплайн
-    global response
+   # Запускаем RAG пайплайн
     response = rag_pipeline.run({
         "expander": {
             "query": retriever_question,
             "user_info": user_info
         },
-        "doc_selection_prompt_builder": {
-            "question": prompt_builder_question,
-            "template": changes_messages,
-            "user_name": user_name,
-            "user_info": user_info,
-            "changes": russian_changes_base
-        },
-        "final_answer_prompt_builder": {
+        "prompt_builder": {
             "question": prompt_builder_question,
             "template": changes_messages,
             "user_name": user_name,
@@ -617,9 +575,11 @@ def get_benefits_response(
             },
             "top_k": top_k
         }},
-        include_outputs_from={"retriever", "final_answer_prompt_builder"})
+    include_outputs_from={"retriever","prompt_builder"})
 
-    response_text = response["final_answer_llm"]["replies"][0].content
+    response_text = response["llm"]["replies"][0].content
+
+    print(len(response['retriever']['documents']))
 
     # Извлечение JSON-объекта по символам [ и ] с конца строки
     references = None
@@ -630,7 +590,7 @@ def get_benefits_response(
             # Находим индекс соответствующего символа '[' перед ']'
             first_bracket_idx = response_text.rfind('[', 0, last_bracket_idx)
             if first_bracket_idx != -1:
-                json_str = response_text[first_bracket_idx:last_bracket_idx + 1]
+                json_str = response_text[first_bracket_idx:last_bracket_idx+1]
 
                 # Предобработка JSON-строки для корректного парсинга
                 json_str_corrected = re.sub(
@@ -645,9 +605,9 @@ def get_benefits_response(
                     # Удаляем JSON-объект из ответа
                     response_text = response_text[:first_bracket_idx].strip()
                 except json.JSONDecodeError as e:
-                    logger.warning(f"Ошибка при парсинге JSON: {e}")
+                    print(f"Ошибка при парсинге JSON: {e}")
     except Exception as e:
-        logger.warning(f"Общая ошибка при обработке ответа: {e}")
+        print(f"Общая ошибка при обработке ответа: {e}")
 
     gc.collect()
     torch.cuda.empty_cache()
