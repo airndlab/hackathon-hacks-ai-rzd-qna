@@ -1,24 +1,6 @@
 name: rzd
 
 services:
-  vllm:
-    image: vllm/vllm-openai:v0.6.3
-    ipc: host
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              device_ids: [ '0' ]
-              capabilities: [ gpu ]
-    environment:
-      - HUGGING_FACE_HUB_TOKEN=${HUGGING_FACE_HUB_TOKEN}
-    volumes:
-      - ~/.cache/huggingface:/root/.cache/huggingface
-    command: --model Qwen/Qwen2.5-14B-Instruct-GPTQ-Int4 --quantization gptq --device cuda
-    networks:
-      - rzd-net
-
   qna:
     image: airndlab/rzd-qna:2024.11.21-13-18
     deploy:
@@ -49,6 +31,9 @@ services:
       - BOT_API_URL=http://158.160.68.33:8092
     networks:
       - rzd-net
+      - shared-net
 
 networks:
   rzd-net:
+  shared-net:
+    external: true
