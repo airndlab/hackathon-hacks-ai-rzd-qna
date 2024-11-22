@@ -2,7 +2,7 @@ name: rzd
 
 services:
   qna:
-    image: airndlab/rzd-qna:2024.11.21-13-18
+    image: airndlab/rzd-qna:2024.11.22-08-22
     deploy:
       resources:
         reservations:
