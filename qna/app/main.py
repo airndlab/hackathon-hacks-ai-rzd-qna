@@ -24,7 +24,6 @@ from pydantic import BaseModel
 
 from app.bot import send_message
 from app.db import init_db, save_answer, set_feedback, save_chat, get_chat, set_profile, Chat, Profile
-from app.indexing import run_indexing_manually
 from app.pipeline import get_chat_response, get_translation, get_benefits_response
 from app.profiles import get_profiles, get_profile, get_default_profile
 
@@ -277,12 +276,6 @@ async def put_chat(chat_id: str, request: PutChatProfile) -> None:
         profile=prof
     )
     await send_message(chat_id, answer)
-
-
-@app.post("/api/indexing")
-async def indexing():
-    await run_indexing_manually()
-    return {'status': 'started'}
 
 
 @app.on_event("startup")
